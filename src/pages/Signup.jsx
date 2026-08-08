@@ -1,6 +1,9 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { ArrowRight, User, Mail, Phone, Lock } from 'lucide-react'
+import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth'
+import { doc, setDoc } from 'firebase/firestore'
+import { auth, db } from '../firebase.js'
 import Logo from '../components/common/Logo.jsx'
 import Button from '../components/common/Button.jsx'
 import Card from '../components/common/Card.jsx'
@@ -17,14 +20,16 @@ export default function Signup() {
   })
 
   const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
 
   const update = (field, value) => {
     setForm((prev) => ({ ...prev, [field]: value }))
     setError('')
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
+    setError('')
 
     if (form.password.length < 6) {
       setError('Password must be at least 6 characters.')
@@ -41,18 +46,44 @@ export default function Signup() {
       return
     }
 
-    // Temporary local account.
-    // Firebase authentication will replace this later.
-    localStorage.setItem(
-      'studymate.profile',
-      JSON.stringify({
+    try {
+      setLoading(true)
+
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        form.email,
+        form.password,
+      )
+
+      const user = userCredential.user
+
+      await updateProfile(user, {
+        displayName: form.name,
+      })
+
+      await setDoc(doc(db, 'users', user.uid), {
         name: form.name,
         email: form.email,
         phone: form.phone,
-      }),
-    )
+        createdAt: new Date().toISOString(),
+      })
 
-    navigate('/onboarding/exam')
+      localStorage.removeItem('studymate.profile')
+
+      navigate('/onboarding/exam')
+    } catch (err) {
+      if (err.code === 'auth/email-already-in-use') {
+        setError('An account with this email already exists.')
+      } else if (err.code === 'auth/invalid-email') {
+        setError('Please enter a valid email address.')
+      } else if (err.code === 'auth/weak-password') {
+        setError('Password is too weak. Use at least 6 characters.')
+      } else {
+        setError('Something went wrong. Please try again.')
+      }
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -67,9 +98,11 @@ export default function Signup() {
             <p className="text-sm font-semibold text-primary-700 mb-2">
               Welcome to StudyMate
             </p>
+
             <h1 className="text-2xl sm:text-3xl font-semibold mb-2">
               Create your account
             </h1>
+
             <p className="text-ink-soft">
               Save your progress and personalize your study experience.
             </p>
@@ -135,9 +168,14 @@ export default function Signup() {
               </p>
             )}
 
-            <Button type="submit" size="lg" className="w-full">
-              Create Account
-              <ArrowRight className="h-4 w-4" />
+            <Button
+              type="submit"
+              size="lg"
+              className="w-full"
+              disabled={loading}
+            >
+              {loading ? 'Creating account...' : 'Create Account'}
+              {!loading && <ArrowRight className="h-4 w-4" />}
             </Button>
           </form>
 
@@ -156,14 +194,12 @@ export default function Signup() {
   )
 }
 
-function Input({
-  icon: Icon,
-  label,
-  ...props
-}) {
+function Input({ icon: Icon, label, ...props }) {
   return (
     <label className="block">
-      <span className="block text-sm font-medium mb-1.5">{label}</span>
+      <span className="block text-sm font-medium mb-1.5">
+        {label}
+      </span>
 
       <div className="relative">
         <Icon className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-ink-faint" />
@@ -175,4 +211,4 @@ function Input({
       </div>
     </label>
   )
-    }
+}
