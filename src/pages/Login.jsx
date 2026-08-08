@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { ArrowRight, Mail, Lock } from 'lucide-react'
+import { signInWithEmailAndPassword } from 'firebase/auth'
+import { auth } from '../firebase.js'
 import Logo from '../components/common/Logo.jsx'
 import Button from '../components/common/Button.jsx'
 import Card from '../components/common/Card.jsx'
@@ -14,32 +16,42 @@ export default function Login() {
   })
 
   const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
 
   const update = (field, value) => {
     setForm((prev) => ({ ...prev, [field]: value }))
     setError('')
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
+    setError('')
 
-    const raw = localStorage.getItem('studymate.profile')
+    try {
+      setLoading(true)
 
-    if (!raw) {
-      setError('No account found. Please create an account first.')
-      return
+      await signInWithEmailAndPassword(
+        auth,
+        form.email,
+        form.password,
+      )
+
+      navigate('/dashboard')
+    } catch (err) {
+      if (
+        err.code === 'auth/invalid-credential' ||
+        err.code === 'auth/user-not-found' ||
+        err.code === 'auth/wrong-password'
+      ) {
+        setError('Incorrect email or password.')
+      } else if (err.code === 'auth/invalid-email') {
+        setError('Please enter a valid email address.')
+      } else {
+        setError('Unable to sign in. Please try again.')
+      }
+    } finally {
+      setLoading(false)
     }
-
-    const profile = JSON.parse(raw)
-
-    if (profile.email !== form.email) {
-      setError('No account found with this email.')
-      return
-    }
-
-    // Temporary login check.
-    // Firebase Authentication will replace this later.
-    navigate('/dashboard')
   }
 
   return (
@@ -91,9 +103,14 @@ export default function Login() {
               </p>
             )}
 
-            <Button type="submit" size="lg" className="w-full">
-              Sign In
-              <ArrowRight className="h-4 w-4" />
+            <Button
+              type="submit"
+              size="lg"
+              className="w-full"
+              disabled={loading}
+            >
+              {loading ? 'Signing in...' : 'Sign In'}
+              {!loading && <ArrowRight className="h-4 w-4" />}
             </Button>
           </form>
 
@@ -129,4 +146,4 @@ function Input({ icon: Icon, label, ...props }) {
       </div>
     </label>
   )
-}
+        }
