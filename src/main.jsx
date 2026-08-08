@@ -11,6 +11,6 @@ ReactDOM.createRoot(document.getElementById('root')).render(
       <OnboardingProvider>
         <App />
       </OnboardingProvider>
-    <BrowserRouter basename="/Studymate">
+    </BrowserRouter>
   </React.StrictMode>,
 )
