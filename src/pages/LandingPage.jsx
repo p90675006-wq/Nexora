@@ -177,7 +177,7 @@ export default function LandingPage() {
 
           <Button
             as={Link}
-            to="/signup"
+            to="/login"
             variant="accent"
             size="lg"
             className="shrink-0"
