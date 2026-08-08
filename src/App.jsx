@@ -1,6 +1,7 @@
 import { Routes, Route } from 'react-router-dom'
 import AppLayout from './components/layout/AppLayout.jsx'
 import LandingPage from './pages/LandingPage.jsx'
+import Signup from './pages/Signup.jsx'
 import OnboardingExam from './pages/onboarding/OnboardingExam.jsx'
 import OnboardingLevel from './pages/onboarding/OnboardingLevel.jsx'
 import OnboardingSubjects from './pages/onboarding/OnboardingSubjects.jsx'
@@ -14,8 +15,11 @@ import NotFound from './pages/NotFound.jsx'
 export default function App() {
   return (
     <Routes>
-      {/* Marketing / entry points — no app shell */}
+      {/* Marketing / entry points */}
       <Route path="/" element={<LandingPage />} />
+      <Route path="/signup" element={<Signup />} />
+
+      {/* Onboarding */}
       <Route path="/onboarding/exam" element={<OnboardingExam />} />
       <Route path="/onboarding/level" element={<OnboardingLevel />} />
       <Route path="/onboarding/subjects" element={<OnboardingSubjects />} />
