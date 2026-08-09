@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react'
 import { doc, getDoc, setDoc } from 'firebase/firestore'
 import { onAuthStateChanged } from 'firebase/auth'
-import { auth, db } from '../../firebase.js'
+import { auth, db } from '../firebase.js'
 
 const STORAGE_KEY = 'studymate.onboarding'
 
