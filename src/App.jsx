@@ -14,6 +14,7 @@ import Dashboard from './pages/Dashboard.jsx'
 import TopicInput from './pages/TopicInput.jsx'
 import LearningHub from './pages/LearningHub.jsx'
 import LearningFeaturePage from './pages/LearningFeaturePage.jsx'
+import AITest from './pages/AITest.jsx'
 
 import Notes from './pages/Notes.jsx'
 import PYQs from './pages/PYQs.jsx'
@@ -49,6 +50,9 @@ export default function App() {
 
       {/* Games */}
       <Route path="/games" element={<Games />} />
+
+      {/* AI Test */}
+      <Route path="/ai-test" element={<AITest />} />
 
       {/* Main app */}
       <Route element={<AppLayout />}>
