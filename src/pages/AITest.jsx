@@ -1,69 +1,208 @@
 import { useState } from 'react'
-import { testNexoraAI } from '../lib/ai'
+import { generateAITest } from '../lib/ai'
+
+const FALLBACK_TEST = {
+  title: 'Photosynthesis Demo Test',
+  topic: 'Photosynthesis',
+  questions: [
+    {
+      question: 'Where does photosynthesis primarily take place in a plant cell?',
+      options: ['Mitochondria', 'Chloroplast', 'Nucleus', 'Ribosome'],
+      answer: 1,
+      explanation: 'Chloroplasts contain chlorophyll, which captures light energy for photosynthesis.',
+    },
+    {
+      question: 'What gas do plants absorb during photosynthesis?',
+      options: ['Oxygen', 'Nitrogen', 'Carbon dioxide', 'Hydrogen'],
+      answer: 2,
+      explanation: 'Plants absorb CO2 from the air and use it to produce glucose.',
+    },
+    {
+      question: 'What is the main product of the light-dependent reactions?',
+      options: ['Glucose', 'ATP and NADPH', 'Carbon dioxide', 'Water'],
+      answer: 1,
+      explanation: 'Light reactions convert light energy into chemical energy stored as ATP and NADPH.',
+    },
+    {
+      question: 'Which pigment is primarily responsible for absorbing light?',
+      options: ['Chlorophyll', 'Melanin', 'Keratin', 'Hemoglobin'],
+      answer: 0,
+      explanation: 'Chlorophyll absorbs mostly red and blue light, reflecting green.',
+    },
+    {
+      question: 'What byproduct is released during photosynthesis?',
+      options: ['Carbon dioxide', 'Nitrogen', 'Oxygen', 'Methane'],
+      answer: 2,
+      explanation: 'Oxygen is released as a byproduct when water molecules are split.',
+    },
+  ],
+}
 
 export default function AITest() {
   const [topic, setTopic] = useState('Photosynthesis')
-  const [result, setResult] = useState(null)
+  const [test, setTest] = useState(null)
+  const [answers, setAnswers] = useState([])
+  const [submitted, setSubmitted] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [usedFallback, setUsedFallback] = useState(false)
 
-  const testAI = async () => {
+  const generateTest = async () => {
     setLoading(true)
     setError('')
-    setResult(null)
+    setTest(null)
+    setSubmitted(false)
+    setUsedFallback(false)
 
     try {
-      const data = await testNexoraAI(topic)
-      setResult(data)
+      const data = await generateAITest(topic, { difficulty: 'medium', count: 5 })
+      setTest(data)
+      setAnswers(new Array(data.questions.length).fill(null))
     } catch (err) {
-      setError(err?.message || 'AI request failed')
+      setError(err?.message || 'AI request failed. You can try a local demo test instead.')
     } finally {
       setLoading(false)
     }
   }
 
+  const useFallback = () => {
+    setError('')
+    setTest(FALLBACK_TEST)
+    setAnswers(new Array(FALLBACK_TEST.questions.length).fill(null))
+    setSubmitted(false)
+    setUsedFallback(true)
+  }
+
+  const selectAnswer = (questionIndex, optionIndex) => {
+    if (submitted) return
+    setAnswers((prev) => {
+      const next = [...prev]
+      next[questionIndex] = optionIndex
+      return next
+    })
+  }
+
+  const submitTest = () => setSubmitted(true)
+
+  const restart = () => {
+    setTest(null)
+    setAnswers([])
+    setSubmitted(false)
+    setError('')
+    setUsedFallback(false)
+  }
+
+  const score = submitted && test
+    ? answers.reduce((acc, a, i) => acc + (a === test.questions[i].answer ? 1 : 0), 0)
+    : 0
+
   return (
     <div className="max-w-2xl mx-auto p-6">
-      <h1 className="text-3xl font-semibold">
-        Nexora AI Test
-      </h1>
-
+      <h1 className="text-3xl font-semibold">Nexora AI Test</h1>
       <p className="text-ink-soft mt-2">
-        Testing Supabase AI connection
+        Generate an AI-powered MCQ test on any topic.
       </p>
 
-      <input
-        value={topic}
-        onChange={(e) => setTopic(e.target.value)}
-        className="w-full mt-6 rounded-xl border border-black/10 p-4"
-        placeholder="Enter a topic"
-      />
+      {!test && (
+        <>
+          <input
+            value={topic}
+            onChange={(e) => setTopic(e.target.value)}
+            className="w-full mt-6 rounded-xl border border-black/10 p-4"
+            placeholder="Enter a topic"
+          />
 
-      <button
-        onClick={testAI}
-        disabled={loading}
-        className="mt-4 rounded-xl bg-accent-600 px-6 py-3 text-white font-medium disabled:opacity-50"
-      >
-        {loading ? 'Connecting...' : 'Test AI'}
-      </button>
+          <button
+            onClick={generateTest}
+            disabled={loading || !topic.trim()}
+            className="mt-4 rounded-xl bg-accent-600 px-6 py-3 text-white font-medium disabled:opacity-50"
+          >
+            {loading ? 'Generating...' : 'Generate Test'}
+          </button>
 
-      {error && (
-        <div className="mt-6 rounded-xl bg-red-50 p-4 text-red-700">
-          <strong>Error:</strong> {error}
-        </div>
+          {error && (
+            <div className="mt-6 rounded-xl bg-red-50 p-4 text-red-700">
+              <p><strong>Error:</strong> {error}</p>
+              <button
+                onClick={useFallback}
+                className="mt-3 rounded-xl bg-white border border-red-200 px-4 py-2 text-sm font-medium text-red-700"
+              >
+                Use local demo test instead
+              </button>
+            </div>
+          )}
+        </>
       )}
 
-      {result && (
-        <div className="mt-6 rounded-xl bg-green-50 p-5">
-          <p className="font-semibold text-green-700">
-            ✅ Supabase Function Connected
-          </p>
+      {test && (
+        <div className="mt-6">
+          <h2 className="text-xl font-semibold">{test.title}</h2>
+          {usedFallback && (
+            <p className="mt-1 text-sm text-amber-600">
+              Showing a local demo test — this was not generated by AI.
+            </p>
+          )}
 
-          <pre className="mt-4 whitespace-pre-wrap text-sm">
-            {JSON.stringify(result, null, 2)}
-          </pre>
+          <div className="mt-6 space-y-6">
+            {test.questions.map((q, qi) => (
+              <div key={qi} className="rounded-xl border border-black/10 p-4">
+                <p className="font-medium">{qi + 1}. {q.question}</p>
+                <div className="mt-3 space-y-2">
+                  {q.options.map((opt, oi) => {
+                    const isSelected = answers[qi] === oi
+                    const isCorrect = oi === q.answer
+                    let style = 'border-black/10'
+                    if (submitted) {
+                      if (isCorrect) style = 'border-green-500 bg-green-50'
+                      else if (isSelected) style = 'border-red-400 bg-red-50'
+                    } else if (isSelected) {
+                      style = 'border-accent-600 bg-accent-50'
+                    }
+                    return (
+                      <button
+                        key={oi}
+                        onClick={() => selectAnswer(qi, oi)}
+                        disabled={submitted}
+                        className={`w-full text-left rounded-lg border p-3 ${style}`}
+                      >
+                        {opt}
+                      </button>
+                    )
+                  })}
+                </div>
+                {submitted && (
+                  <p className="mt-3 text-sm text-ink-soft">
+                    <strong>Explanation:</strong> {q.explanation}
+                  </p>
+                )}
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-6 flex items-center gap-4">
+            {!submitted ? (
+              <button
+                onClick={submitTest}
+                disabled={answers.some((a) => a === null)}
+                className="rounded-xl bg-accent-600 px-6 py-3 text-white font-medium disabled:opacity-50"
+              >
+                Submit
+              </button>
+            ) : (
+              <p className="font-semibold">
+                Score: {score} / {test.questions.length}
+              </p>
+            )}
+
+            <button
+              onClick={restart}
+              className="rounded-xl border border-black/10 px-6 py-3 font-medium"
+            >
+              Restart
+            </button>
+          </div>
         </div>
       )}
     </div>
   )
-}
+                          }
