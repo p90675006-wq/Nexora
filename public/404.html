@@ -15,7 +15,8 @@
         const route = path.slice(base.length);
 
         window.location.replace(
-          base + '?redirect=' +
+          base +
+          '?redirect=' +
           encodeURIComponent('/' + route + search + hash)
         );
       } else {
