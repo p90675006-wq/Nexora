@@ -52,12 +52,255 @@ const FEATURE_CONFIG = {
   },
 }
 
-const QUIZ_OPTIONS = [
-  'Memorise everything without understanding',
-  'Understand the concept and apply it to examples',
-  'Read it once and never revise',
-  'Skip difficult parts',
-]
+/* =========================================================
+   TOPIC CONTENT
+   ========================================================= */
+
+const TOPIC_CONTENT = {
+  matrix: {
+    definition:
+      'A matrix is a rectangular arrangement of numbers, symbols or expressions in rows and columns. If a matrix has m rows and n columns, its order is m × n.',
+
+    concepts: [
+      'Rows run horizontally and columns run vertically.',
+      'Two matrices can be added or subtracted only when they have the same order.',
+      'Matrix multiplication AB is possible when the number of columns of A equals the number of rows of B.',
+      'The determinant is defined only for square matrices.',
+      'An inverse exists when the determinant of a square matrix is non-zero.',
+    ],
+
+    example:
+      'If A = [[1, 2], [3, 4]], then A is a 2 × 2 matrix. Its determinant is |A| = (1 × 4) − (2 × 3) = −2.',
+
+    key:
+      'For JEE, focus especially on matrix operations, determinants, inverse of a matrix and solving linear equations.',
+
+    question:
+      'If A is a 2 × 3 matrix and B is a 3 × 2 matrix, what is the order of AB?',
+
+    options: [
+      '2 × 2',
+      '3 × 3',
+      '2 × 3',
+      '3 × 2',
+    ],
+
+    answer: 0,
+
+    explanation:
+      'A is 2 × 3 and B is 3 × 2. The inner dimensions 3 match, so AB exists and its order is 2 × 2.',
+  },
+
+  'cell biology': {
+    definition:
+      'The cell is the basic structural and functional unit of life. Cells contain specialised structures called organelles that perform specific functions.',
+
+    concepts: [
+      'The plasma membrane controls movement of substances into and out of the cell.',
+      'The nucleus contains genetic material in eukaryotic cells.',
+      'Mitochondria are major sites of aerobic respiration and ATP production.',
+      'Ribosomes are responsible for protein synthesis.',
+      'Plant cells contain chloroplasts for photosynthesis.',
+    ],
+
+    example:
+      'Mitochondria contain their own DNA and ribosomes, which supports the endosymbiotic theory.',
+
+    key:
+      'For NEET, compare prokaryotic and eukaryotic cells and learn the functions of major organelles.',
+
+    question:
+      'Which organelle is primarily associated with ATP production in aerobic respiration?',
+
+    options: [
+      'Ribosome',
+      'Mitochondria',
+      'Golgi apparatus',
+      'Lysosome',
+    ],
+
+    answer: 1,
+
+    explanation:
+      'Mitochondria are the major sites of aerobic respiration and oxidative phosphorylation.',
+  },
+
+  photosynthesis: {
+    definition:
+      'Photosynthesis is the process by which green plants convert light energy into chemical energy, producing carbohydrates from carbon dioxide and water.',
+
+    concepts: [
+      'Light reactions occur mainly in the thylakoid membranes.',
+      'The Calvin cycle occurs in the chloroplast stroma.',
+      'ATP and NADPH produced during light reactions are used in carbon fixation.',
+      'RuBisCO plays an important role in carbon fixation in C3 plants.',
+      'C4 plants have specialised adaptations that reduce photorespiration.',
+    ],
+
+    example:
+      'In C3 plants, the first stable product of carbon fixation is a three-carbon compound, 3-PGA.',
+
+    key:
+      'For NEET, remember the difference between C3, C4 and CAM pathways and the role of RuBisCO.',
+
+    question:
+      'Where do the light-dependent reactions of photosynthesis mainly occur?',
+
+    options: [
+      'Chloroplast stroma',
+      'Thylakoid membranes',
+      'Nucleus',
+      'Mitochondrial matrix',
+    ],
+
+    answer: 1,
+
+    explanation:
+      'The light-dependent reactions occur on the thylakoid membranes of chloroplasts.',
+  },
+
+  'laws of motion': {
+    definition:
+      'Newton’s laws of motion describe the relationship between the motion of an object and the forces acting on it.',
+
+    concepts: [
+      'Newton’s first law describes inertia.',
+      'Newton’s second law gives the relationship F = ma.',
+      'Newton’s third law states that forces occur in equal and opposite pairs.',
+      'Net force determines the acceleration of an object.',
+    ],
+
+    example:
+      'If a net force of 10 N acts on a 2 kg object, its acceleration is a = F/m = 10/2 = 5 m/s².',
+
+    key:
+      'For JEE, practise free-body diagrams and carefully identify all forces acting on the object.',
+
+    question:
+      'A net force of 20 N acts on a 5 kg body. What is its acceleration?',
+
+    options: [
+      '2 m/s²',
+      '4 m/s²',
+      '5 m/s²',
+      '10 m/s²',
+    ],
+
+    answer: 1,
+
+    explanation:
+      'Using F = ma, a = F/m = 20/5 = 4 m/s².',
+  },
+
+  'chemical bonding': {
+    definition:
+      'Chemical bonding is the attractive interaction that holds atoms or ions together to form stable molecules and compounds.',
+
+    concepts: [
+      'Ionic bonding involves transfer of electrons.',
+      'Covalent bonding involves sharing of electrons.',
+      'Coordinate bonds involve a shared pair donated by one atom.',
+      'Molecular geometry can be explained using concepts such as VSEPR theory.',
+    ],
+
+    example:
+      'In NaCl, sodium transfers an electron to chlorine, producing Na⁺ and Cl⁻ ions that are held together by electrostatic attraction.',
+
+    key:
+      'For JEE, focus on Lewis structures, formal charge, VSEPR shapes, hybridisation and bond parameters.',
+
+    question:
+      'Which type of bond is formed by sharing of electron pairs between atoms?',
+
+    options: [
+      'Ionic bond',
+      'Covalent bond',
+      'Metallic bond',
+      'Hydrogen bond',
+    ],
+
+    answer: 1,
+
+    explanation:
+      'A covalent bond is formed when atoms share one or more pairs of electrons.',
+  },
+}
+
+/* =========================================================
+   FALLBACK CONTENT
+   ========================================================= */
+
+function getTopicContent(topic) {
+  const key = topic.trim().toLowerCase()
+
+  if (TOPIC_CONTENT[key]) {
+    return TOPIC_CONTENT[key]
+  }
+
+  if (key.includes('matrix')) {
+    return TOPIC_CONTENT.matrix
+  }
+
+  if (key.includes('cell')) {
+    return TOPIC_CONTENT['cell biology']
+  }
+
+  if (key.includes('photosynthesis')) {
+    return TOPIC_CONTENT.photosynthesis
+  }
+
+  if (
+    key.includes('newton') ||
+    key.includes('motion') ||
+    key.includes('force')
+  ) {
+    return TOPIC_CONTENT['laws of motion']
+  }
+
+  if (
+    key.includes('bond') ||
+    key.includes('chemical')
+  ) {
+    return TOPIC_CONTENT['chemical bonding']
+  }
+
+  return {
+    definition:
+      `${topic} is an important concept that should be understood through its definition, core principles and applications.`,
+
+    concepts: [
+      `Understand the basic definition and terminology of ${topic}.`,
+      `Break ${topic} into smaller concepts and connect them logically.`,
+      `Identify important formulas, facts or processes related to ${topic}.`,
+      `Practise questions based on ${topic} instead of relying only on memorisation.`,
+    ],
+
+    example:
+      `Take one simple example of ${topic} and explain the reasoning behind it step by step.`,
+
+    key:
+      `For exam preparation, focus on concepts, active recall, question practice and spaced revision.`,
+
+    question:
+      `Which approach is most effective when studying ${topic}?`,
+
+    options: [
+      'Only memorise the textbook',
+      'Understand the concept and practise questions',
+      'Skip difficult parts',
+      'Study it once and never revise',
+    ],
+
+    answer: 1,
+
+    explanation:
+      'Conceptual understanding followed by practice and revision is the strongest approach for exam preparation.',
+  }
+}
+
+/* =========================================================
+   MAIN PAGE
+   ========================================================= */
 
 export default function LearningFeaturePage() {
   const { feature } = useParams()
@@ -97,7 +340,6 @@ export default function LearningFeaturePage() {
       )
     }
 
-    // Save progress for current topic
     const savedTopic = JSON.parse(
       localStorage.getItem('nexora_current_topic') || 'null'
     )
@@ -175,48 +417,77 @@ export default function LearningFeaturePage() {
           </div>
         </div>
 
-        {/* LEARN */}
-        {feature === 'learn' && (
-          <div className="mt-8 space-y-5">
+        {/* =================================================
+            LEARN
+           ================================================= */}
 
-            <Section
-              number="01"
-              title={`What is ${topic}?`}
-            >
-              <p>
-                Start by understanding the basic meaning of{' '}
-                <strong>{topic}</strong>. Focus on what it is,
-                why it matters, and where it is used.
-              </p>
-            </Section>
+        {feature === 'learn' && (() => {
+          const content = getTopicContent(topic)
 
-            <Section
-              number="02"
-              title="Build the concept"
-            >
-              <p>
-                Break the topic into smaller ideas. Connect
-                important terms, processes, rules and examples
-                instead of trying to memorise everything at once.
-              </p>
-            </Section>
+          return (
+            <div className="mt-8 space-y-5">
 
-            <Section
-              number="03"
-              title="Apply it"
-            >
-              <p>
-                Try explaining <strong>{topic}</strong> in your
-                own words and then apply the idea to a simple
-                example or question.
-              </p>
-            </Section>
+              <Section
+                number="01"
+                title={`What is ${topic}?`}
+              >
+                <p>
+                  {content.definition}
+                </p>
+              </Section>
 
-            <KeyPoint topic={topic} />
-          </div>
-        )}
+              <Section
+                number="02"
+                title="Core concepts"
+              >
+                <ul className="list-disc pl-5 space-y-2">
+                  {content.concepts.map((item) => (
+                    <li key={item}>
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              </Section>
 
-        {/* WATCH */}
+              <Section
+                number="03"
+                title="Worked example"
+              >
+                <p>
+                  {content.example}
+                </p>
+              </Section>
+
+              <div className="rounded-2xl bg-accent-50/60 p-6">
+
+                <div className="flex gap-3">
+
+                  <Lightbulb className="h-5 w-5 text-accent-600 shrink-0" />
+
+                  <div>
+
+                    <p className="font-semibold">
+                      Exam Focus
+                    </p>
+
+                    <p className="text-sm text-ink-soft mt-1">
+                      {content.key}
+                    </p>
+
+                  </div>
+
+                </div>
+
+              </div>
+
+            </div>
+          )
+        })()}
+
+        {/* =================================================
+            WATCH
+           ================================================= */}
+
         {feature === 'watch' && (
           <div className="mt-8">
 
@@ -258,10 +529,14 @@ export default function LearningFeaturePage() {
               />
 
             </div>
+
           </div>
         )}
 
-        {/* REMEMBER */}
+        {/* =================================================
+            REMEMBER
+           ================================================= */}
+
         {feature === 'remember' && (
           <div className="mt-8 space-y-5">
 
@@ -309,10 +584,14 @@ export default function LearningFeaturePage() {
                 studying everything in one session.
               </p>
             </Section>
+
           </div>
         )}
 
-        {/* PLAY */}
+        {/* =================================================
+            PLAY
+           ================================================= */}
+
         {feature === 'play' && (
           <Quiz
             topic={topic}
@@ -323,64 +602,77 @@ export default function LearningFeaturePage() {
           />
         )}
 
-        {/* PYQs */}
-        {feature === 'pyqs' && (
-          <div className="mt-8">
+        {/* =================================================
+            PYQS
+           ================================================= */}
 
-            <div className="rounded-2xl border border-black/5 p-6">
+        {feature === 'pyqs' && (() => {
+          const content = getTopicContent(topic)
 
-              <p className="text-xs text-ink-faint uppercase tracking-wide">
-                Practice Question
-              </p>
+          return (
+            <div className="mt-8">
 
-              <h2 className="text-xl font-semibold mt-3">
-                Which approach is most effective for mastering {topic}?
-              </h2>
+              <div className="rounded-2xl border border-black/5 p-6">
 
-              <div className="space-y-3 mt-6">
+                <p className="text-xs text-ink-faint uppercase tracking-wide">
+                  Exam-style Practice
+                </p>
 
-                {[
-                  'Passive reading only',
-                  'Understanding, active recall and practice',
-                  'Memorising without revision',
-                  'Skipping difficult questions',
-                ].map((answer, index) => (
-                  <button
-                    key={answer}
-                    onClick={() => {
-                      setSelectedAnswer(index)
-                      setShowAnswer(true)
-                    }}
-                    className={`w-full text-left rounded-xl border p-4 transition ${
-                      selectedAnswer === index
-                        ? 'border-accent-500 bg-accent-50'
-                        : 'border-black/10 hover:bg-black/5'
-                    }`}
-                  >
-                    {answer}
-                  </button>
-                ))}
+                <h2 className="text-xl font-semibold mt-3">
+                  {content.question}
+                </h2>
+
+                <div className="space-y-3 mt-6">
+
+                  {content.options.map((answer, index) => (
+                    <button
+                      key={answer}
+                      onClick={() => {
+                        setSelectedAnswer(index)
+                        setShowAnswer(true)
+                      }}
+                      className={`w-full text-left rounded-xl border p-4 transition ${
+                        selectedAnswer === index
+                          ? 'border-accent-500 bg-accent-50'
+                          : 'border-black/10 hover:bg-black/5'
+                      }`}
+                    >
+                      {answer}
+                    </button>
+                  ))}
+
+                </div>
+
+                {showAnswer && (
+                  <div className="mt-6 rounded-xl bg-accent-50/60 p-5">
+
+                    {selectedAnswer === content.answer ? (
+                      <p className="font-semibold text-green-700">
+                        Correct! 🎯
+                      </p>
+                    ) : (
+                      <p className="font-semibold">
+                        Not quite. Review the explanation.
+                      </p>
+                    )}
+
+                    <p className="text-sm text-ink-soft mt-2">
+                      {content.explanation}
+                    </p>
+
+                  </div>
+                )}
 
               </div>
 
-              {showAnswer && (
-                <div className="mt-6 rounded-xl bg-accent-50/60 p-5">
-                  <p className="font-semibold">
-                    Correct approach: understanding + practice 🎯
-                  </p>
-
-                  <p className="text-sm text-ink-soft mt-2">
-                    For {topic}, focus on understanding the
-                    concept first and then testing yourself.
-                  </p>
-                </div>
-              )}
-
             </div>
-          </div>
-        )}
+          )
+        })()}
 
-        {/* ANALYZE */}
+        {/* =================================================
+            ANALYZE
+           ================================================= */}
+
         {feature === 'analyze' && (
           <div className="mt-8">
 
@@ -418,295 +710,3 @@ export default function LearningFeaturePage() {
               </p>
 
             </div>
-
-          </div>
-        )}
-
-        {/* REVISE */}
-        {feature === 'revise' && (
-          <div className="mt-8 space-y-4">
-
-            {[
-              `Define ${topic} in your own words.`,
-              `Recall the three most important ideas in ${topic}.`,
-              `Solve one question without looking at your notes.`,
-              `Explain why ${topic} matters.`,
-            ].map((item, index) => (
-              <label
-                key={item}
-                className="flex items-start gap-3 rounded-xl border border-black/10 p-4 cursor-pointer hover:bg-black/5"
-              >
-                <input
-                  type="checkbox"
-                  className="mt-1 h-4 w-4"
-                />
-
-                <span className="text-sm">
-                  {index + 1}. {item}
-                </span>
-              </label>
-            ))}
-
-          </div>
-        )}
-
-        {/* Completion */}
-        <div className="mt-8 pt-6 border-t border-border">
-
-          {completed ? (
-            <div className="rounded-xl bg-green-50 p-5">
-
-              <div className="flex items-center gap-3">
-
-                <CheckCircle2 className="h-6 w-6 text-green-600" />
-
-                <div>
-                  <p className="font-semibold text-green-700">
-                    {config.label} completed!
-                  </p>
-
-                  <p className="text-sm text-ink-soft mt-1">
-                    Your progress has been saved.
-                  </p>
-                </div>
-
-              </div>
-
-              <div className="flex flex-wrap gap-3 mt-4">
-
-                <button
-                  onClick={reset}
-                  className="inline-flex items-center gap-2 rounded-xl border border-black/10 px-4 py-2.5 text-sm font-medium hover:bg-white"
-                >
-                  <RotateCcw className="h-4 w-4" />
-                  Do Again
-                </button>
-
-                <Link
-                  to="/progress"
-                  className="inline-flex items-center gap-2 rounded-xl bg-accent-600 px-4 py-2.5 text-sm font-medium text-white"
-                >
-                  View Progress
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
-
-              </div>
-
-            </div>
-          ) : (
-            <button
-              onClick={markComplete}
-              className="inline-flex items-center gap-2 rounded-xl bg-accent-600 px-6 py-3 text-white font-medium hover:opacity-90 transition"
-            >
-              Mark as Complete
-              <CheckCircle2 className="h-4 w-4" />
-            </button>
-          )}
-
-        </div>
-
-      </div>
-    </div>
-  )
-}
-
-function Section({ number, title, children }) {
-  return (
-    <div className="rounded-2xl border border-black/5 p-6">
-
-      <div className="flex items-center gap-3 mb-3">
-
-        <span className="text-xs font-mono text-ink-faint">
-          {number}
-        </span>
-
-        <h2 className="text-xl font-semibold">
-          {title}
-        </h2>
-
-      </div>
-
-      <div className="text-base leading-7 text-ink-soft">
-        {children}
-      </div>
-
-    </div>
-  )
-}
-
-function KeyPoint({ topic }) {
-  return (
-    <div className="rounded-xl bg-accent-50/60 p-5">
-
-      <div className="flex gap-3">
-
-        <Lightbulb className="h-5 w-5 text-accent-600 shrink-0" />
-
-        <div>
-          <p className="font-medium">
-            Key point
-          </p>
-
-          <p className="text-sm text-ink-soft mt-1">
-            Don&apos;t just memorise {topic}. Try explaining
-            it in your own words.
-          </p>
-        </div>
-
-      </div>
-
-    </div>
-  )
-}
-
-function MiniStep({ number, title, text }) {
-  return (
-    <div className="rounded-xl border border-black/5 p-5">
-
-      <span className="text-xs text-ink-faint">
-        Step {number}
-      </span>
-
-      <h3 className="font-semibold mt-1">
-        {title}
-      </h3>
-
-      <p className="text-sm text-ink-soft mt-2">
-        {text}
-      </p>
-
-    </div>
-  )
-}
-
-function Stat({ title, value }) {
-  return (
-    <div className="rounded-xl border border-black/5 p-5">
-
-      <p className="text-xs text-ink-faint">
-        {title}
-      </p>
-
-      <p className="font-semibold mt-2 capitalize">
-        {value}
-      </p>
-
-    </div>
-  )
-}
-
-function Quiz({
-  topic,
-  selectedAnswer,
-  setSelectedAnswer,
-  showAnswer,
-  setShowAnswer,
-}) {
-  return (
-    <div className="mt-8">
-
-      <div className="text-center">
-
-        <div className="mx-auto h-16 w-16 rounded-full bg-accent-50 flex items-center justify-center">
-          <Trophy className="h-8 w-8 text-accent-600" />
-        </div>
-
-        <h2 className="text-2xl font-semibold mt-4">
-          Quick Challenge
-        </h2>
-
-        <p className="text-ink-soft mt-2">
-          Test your understanding of {topic}.
-        </p>
-
-      </div>
-
-      <div className="mt-8 rounded-2xl border border-black/5 p-6">
-
-        <p className="font-semibold">
-          What is the best way to master {topic}?
-        </p>
-
-        <div className="space-y-3 mt-5">
-
-          {QUIZ_OPTIONS.map((answer, index) => {
-
-            const selected = selectedAnswer === index
-
-            return (
-              <button
-                key={answer}
-                onClick={() => {
-                  setSelectedAnswer(index)
-                  setShowAnswer(false)
-                }}
-                className={`w-full text-left rounded-xl border p-4 transition ${
-                  selected
-                    ? 'border-accent-500 bg-accent-50'
-                    : 'border-black/10 hover:bg-black/5'
-                }`}
-              >
-
-                <div className="flex items-center gap-3">
-
-                  {selected ? (
-                    <CheckCircle2 className="h-5 w-5 text-accent-600" />
-                  ) : (
-                    <div className="h-5 w-5 rounded-full border border-black/20" />
-                  )}
-
-                  <span>
-                    {answer}
-                  </span>
-
-                </div>
-
-              </button>
-            )
-          })}
-
-        </div>
-
-        <button
-          disabled={selectedAnswer === null}
-          onClick={() => setShowAnswer(true)}
-          className="mt-6 rounded-xl bg-accent-600 px-6 py-3 text-white font-medium disabled:opacity-40"
-        >
-          Check Answer
-        </button>
-
-        {showAnswer && (
-          <div className="mt-6 rounded-xl bg-accent-50/60 p-5">
-
-            {selectedAnswer === 1 ? (
-              <>
-                <p className="font-semibold text-green-700">
-                  Correct! 🎉
-                </p>
-
-                <p className="text-sm text-ink-soft mt-2">
-                  Understanding and applying a concept is
-                  much more effective than memorising it
-                  without understanding.
-                </p>
-              </>
-            ) : (
-              <>
-                <p className="font-semibold">
-                  Good attempt! 💪
-                </p>
-
-                <p className="text-sm text-ink-soft mt-2">
-                  The best answer is to understand the
-                  concept and apply it to examples.
-                </p>
-              </>
-            )}
-
-          </div>
-        )}
-
-      </div>
-    </div>
-  )
-    }
