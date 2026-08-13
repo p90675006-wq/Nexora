@@ -1,11 +1,17 @@
 <!doctype html>
-<html>
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <script>
-      sessionStorage.redirect = location.href;
+      const path = window.location.pathname;
+
+      sessionStorage.setItem(
+        'redirect',
+        path + window.location.search + window.location.hash
+      );
+
+      window.location.replace('/Nexora/');
     </script>
-    <meta http-equiv="refresh" content="0;URL='/Nexora/'" />
   </head>
   <body></body>
 </html>
