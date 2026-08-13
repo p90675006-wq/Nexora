@@ -1,8 +1,17 @@
 import { Link } from 'react-router-dom'
-import { ArrowRight, Flame, RotateCcw, BookOpen, Sparkles } from 'lucide-react'
+import {
+  ArrowRight,
+  Flame,
+  RotateCcw,
+  BookOpen,
+  Sparkles,
+  BarChart3,
+} from 'lucide-react'
+
 import Card from '../components/common/Card.jsx'
 import Button from '../components/common/Button.jsx'
 import ProgressRing from '../components/common/ProgressRing.jsx'
+
 import { useOnboarding } from '../context/OnboardingContext.jsx'
 import { EXAMS } from '../data/examOptions.js'
 
@@ -19,7 +28,10 @@ export default function Dashboard() {
       <div className="min-h-[60vh] flex items-center justify-center">
         <div className="text-center">
           <div className="h-10 w-10 rounded-full border-4 border-primary-100 border-t-primary-700 animate-spin mx-auto mb-4" />
-          <p className="text-sm text-ink-faint">Loading your dashboard...</p>
+
+          <p className="text-sm text-ink-faint">
+            Loading your dashboard...
+          </p>
         </div>
       </div>
     )
@@ -70,35 +82,54 @@ export default function Dashboard() {
             strokeWidth={7}
           />
 
-          <div className="flex-1 grid grid-cols-3 gap-6 w-full text-center sm:text-left">
+          <div className="flex-1 w-full">
 
-            <div>
-              <p className="text-xs text-ink-faint mb-1">
-                Overall Progress
-              </p>
-              <p className="text-xl font-mono font-semibold">
-                0%
-              </p>
+            <div className="grid grid-cols-3 gap-6 text-center sm:text-left">
+
+              <div>
+                <p className="text-xs text-ink-faint mb-1">
+                  Overall Progress
+                </p>
+
+                <p className="text-xl font-mono font-semibold">
+                  0%
+                </p>
+              </div>
+
+              <div>
+                <p className="text-xs text-ink-faint mb-1">
+                  Topics Done
+                </p>
+
+                <p className="text-xl font-mono font-semibold">
+                  0
+                </p>
+              </div>
+
+              <div>
+                <p className="text-xs text-ink-faint mb-1 flex items-center gap-1 justify-center sm:justify-start">
+                  <Flame className="h-3.5 w-3.5 text-accent-600" />
+                  Streak
+                </p>
+
+                <p className="text-xl font-mono font-semibold">
+                  0d
+                </p>
+              </div>
+
             </div>
 
-            <div>
-              <p className="text-xs text-ink-faint mb-1">
-                Topics Done
-              </p>
-              <p className="text-xl font-mono font-semibold">
-                0
-              </p>
-            </div>
-
-            <div>
-              <p className="text-xs text-ink-faint mb-1 flex items-center gap-1 justify-center sm:justify-start">
-                <Flame className="h-3.5 w-3.5 text-accent-600" />
-                Streak
-              </p>
-
-              <p className="text-xl font-mono font-semibold">
-                0d
-              </p>
+            {/* Progress link */}
+            <div className="mt-5 flex justify-center sm:justify-start">
+              <Button
+                as={Link}
+                to="/progress"
+                variant="secondary"
+                size="sm"
+              >
+                <BarChart3 className="h-4 w-4" />
+                View Full Progress
+              </Button>
             </div>
 
           </div>
@@ -109,6 +140,7 @@ export default function Dashboard() {
       <div>
         <div className="flex items-center gap-2 mb-4">
           <BookOpen className="h-5 w-5 text-primary-700" />
+
           <h2 className="font-semibold">
             Your Subjects
           </h2>
@@ -116,6 +148,7 @@ export default function Dashboard() {
 
         {subjectList.length > 0 ? (
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+
             {subjectList.map((subject, index) => (
               <Card
                 key={`${subject}-${index}`}
@@ -141,9 +174,11 @@ export default function Dashboard() {
                 </p>
               </Card>
             ))}
+
           </div>
         ) : (
           <Card className="p-6 text-center">
+
             <BookOpen className="h-8 w-8 text-primary-600 mx-auto mb-3" />
 
             <h3 className="font-semibold">
@@ -154,13 +189,16 @@ export default function Dashboard() {
               Select subjects to personalise your StudyMate experience.
             </p>
 
+            {/* FIXED: correct onboarding route */}
             <Button
               as={Link}
-              to="/onboarding"
+              to="/onboarding/subjects"
               variant="secondary"
             >
               Set Up Subjects
+              <ArrowRight className="h-4 w-4" />
             </Button>
+
           </Card>
         )}
       </div>
@@ -204,14 +242,17 @@ export default function Dashboard() {
       <div className="grid lg:grid-cols-2 gap-4">
 
         <Card className="p-6">
+
           <div className="flex items-center gap-2 mb-3">
             <RotateCcw className="h-4 w-4 text-primary-700" />
+
             <h3 className="font-semibold text-sm">
               Today&apos;s Revision
             </h3>
           </div>
 
           <div className="text-center py-6">
+
             <Sparkles className="h-8 w-8 text-primary-600 mx-auto mb-3" />
 
             <p className="font-medium">
@@ -221,16 +262,19 @@ export default function Dashboard() {
             <p className="text-sm text-ink-faint mt-1">
               Start learning a topic to create your first revision task.
             </p>
+
           </div>
         </Card>
 
         {/* Recent Activity */}
         <Card className="p-6">
+
           <h3 className="font-semibold text-sm mb-3">
             Recent Activity
           </h3>
 
           <div className="text-center py-6">
+
             <p className="font-medium">
               No activity yet
             </p>
@@ -238,6 +282,7 @@ export default function Dashboard() {
             <p className="text-sm text-ink-faint mt-1">
               Your study activity will appear here.
             </p>
+
           </div>
         </Card>
 
@@ -245,6 +290,7 @@ export default function Dashboard() {
 
       {/* Quick Start */}
       <Card className="p-6 bg-primary-50 border-primary-100">
+
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
 
           <div>
@@ -267,6 +313,7 @@ export default function Dashboard() {
           </Button>
 
         </div>
+
       </Card>
 
     </div>
