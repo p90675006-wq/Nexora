@@ -3,9 +3,7 @@ import { supabase } from './supabase'
 async function callAI(body) {
   const { data, error } = await supabase.functions.invoke(
     'dynamic-action',
-    {
-      body,
-    }
+    { body }
   )
 
   if (error) {
@@ -25,7 +23,7 @@ async function callAI(body) {
           }
         }
       } catch {
-        // Keep the original error message.
+        // Keep original error.
       }
     }
 
@@ -71,8 +69,15 @@ export async function summarizeTopic(topic) {
 
 export async function generateVideoLesson(topic) {
   return callAI({
-    action: 'video',
+    action: 'video-start',
     topic,
+  })
+}
+
+export async function checkVideoGeneration(operationName) {
+  return callAI({
+    action: 'video-status',
+    operationName,
   })
 }
 
