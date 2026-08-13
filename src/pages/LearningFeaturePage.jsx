@@ -13,12 +13,12 @@ import {
   BarChart3,
   Loader2,
   Volume2,
+  Play,
+  Sparkles,
 } from 'lucide-react'
 
 import {
   summarizeTopic,
-  generateVideoLesson,
-  generateMemorySong,
   generatePuzzle,
 } from '../lib/ai.js'
 
@@ -31,12 +31,12 @@ const FEATURE_CONFIG = {
   watch: {
     label: 'Watch',
     icon: Film,
-    description: 'Learn the topic through an AI-generated lesson.',
+    description: 'Learn through an animated AI lesson.',
   },
   remember: {
     label: 'Remember',
     icon: Brain,
-    description: 'Create an AI-powered memory aid.',
+    description: 'Turn important concepts into a memorable AI song.',
   },
   play: {
     label: 'Play',
@@ -51,7 +51,7 @@ const FEATURE_CONFIG = {
   analyze: {
     label: 'Analyze',
     icon: BarChart3,
-    description: 'Get an AI-powered topic analysis.',
+    description: 'Get an advanced AI topic analysis.',
   },
   revise: {
     label: 'Revise',
@@ -96,20 +96,68 @@ export default function LearningFeaturePage() {
       let result
 
       if (feature === 'learn') {
-        result = await summarizeTopic(topic)
+        result = await summarizeTopic(
+          `${topic}
+
+Give an advanced but student-friendly explanation.
+Cover definition, core concepts, mechanism, important terminology,
+examples, exam-important facts, common mistakes and advanced points.`
+        )
       } else if (feature === 'watch') {
-        result = await generateVideoLesson(topic)
+        result = await summarizeTopic(
+          `${topic}
+
+Create a complete animated educational lesson presentation.
+
+Structure it as:
+1. HOOK
+2. VISUAL INTRODUCTION
+3. MAIN CONCEPT 1
+4. MAIN CONCEPT 2
+5. MAIN CONCEPT 3
+6. SIMPLE REAL-LIFE ANALOGY
+7. EXAM ALERTS
+8. QUICK RECAP
+9. THREE QUIZ QUESTIONS
+
+Write concise scene-by-scene content that can be displayed as an animated lesson.
+Use visual descriptions such as diagrams, arrows, molecules, charts or process animations.
+Do NOT say that video generation is unavailable.`
+        )
       } else if (feature === 'remember') {
-        result = await generateMemorySong(topic)
+        result = await summarizeTopic(
+          `${topic}
+
+Create an ORIGINAL educational memory song.
+
+Include:
+- catchy title
+- short original lyrics
+- important concepts and facts
+- mnemonic/rhyme where useful
+- a short explanation of what each part helps remember
+
+Do not copy any existing song lyrics.
+Make it fun, catchy and suitable for students.`
+        )
       } else if (feature === 'play' || feature === 'pyqs') {
         result = await generatePuzzle(topic)
       } else if (feature === 'analyze') {
         result = await summarizeTopic(
-          `${topic}. Give an advanced analysis including important concepts, common mistakes, exam importance and areas students should focus on.`
+          `${topic}
+
+Give an advanced analysis including:
+important concepts, mechanism, exam importance,
+common mistakes, frequently tested facts,
+high-level connections and areas students should focus on.`
         )
       } else if (feature === 'revise') {
         result = await summarizeTopic(
-          `${topic}. Create an advanced revision guide with key definitions, formulas, facts, important points and last-minute exam tips.`
+          `${topic}
+
+Create an advanced last-minute revision guide.
+Include definitions, formulas, facts, processes,
+important keywords, common mistakes and exam tips.`
         )
       }
 
@@ -120,6 +168,7 @@ export default function LearningFeaturePage() {
       setAiContent(result)
     } catch (err) {
       console.error(err)
+
       setError(
         err?.message ||
           'AI could not generate this content. Please try again.'
@@ -221,7 +270,7 @@ export default function LearningFeaturePage() {
 
               <button
                 onClick={runAI}
-                className="mt-5 inline-flex items-center gap-2 rounded-xl bg-accent-600 px-6 py-3 text-white font-medium"
+                className="mt-5 inline-flex items-center gap-2 rounded-xl bg-accent-600 px-6 py-3 text-white font-medium hover:opacity-90 transition"
               >
                 Generate with AI
                 <ArrowRight className="h-4 w-4" />
@@ -295,7 +344,7 @@ export default function LearningFeaturePage() {
               <div className="flex flex-wrap gap-3 mt-4">
                 <button
                   onClick={reset}
-                  className="inline-flex items-center gap-2 rounded-xl border border-black/10 px-4 py-2.5 text-sm font-medium"
+                  className="inline-flex items-center gap-2 rounded-xl border border-black/10 px-4 py-2.5 text-sm font-medium hover:bg-white"
                 >
                   <RotateCcw className="h-4 w-4" />
                   Do Again
@@ -313,7 +362,7 @@ export default function LearningFeaturePage() {
           ) : (
             <button
               onClick={markComplete}
-              className="inline-flex items-center gap-2 rounded-xl bg-accent-600 px-6 py-3 text-white font-medium"
+              className="inline-flex items-center gap-2 rounded-xl bg-accent-600 px-6 py-3 text-white font-medium hover:opacity-90 transition"
             >
               Mark as Complete
               <CheckCircle2 className="h-4 w-4" />
@@ -389,28 +438,47 @@ function AIContent({
   if (feature === 'watch') {
     return (
       <div className="space-y-5">
+        <div className="overflow-hidden rounded-2xl bg-black text-white shadow-card">
+          <div className="relative min-h-[280px] p-8 flex flex-col justify-center items-center text-center bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-900">
+            <div className="absolute top-5 right-5">
+              <Sparkles className="h-6 w-6 animate-pulse opacity-80" />
+            </div>
+
+            <div className="h-20 w-20 rounded-full bg-white/10 flex items-center justify-center mb-5">
+              <Play className="h-9 w-9 ml-1" />
+            </div>
+
+            <p className="text-xs uppercase tracking-[0.25em] opacity-60">
+              NEXORA AI LESSON
+            </p>
+
+            <h2 className="text-2xl sm:text-3xl font-semibold mt-3">
+              {topic}
+            </h2>
+
+            <p className="text-sm opacity-70 mt-3">
+              Animated educational lesson
+            </p>
+
+            <div className="flex gap-2 mt-6">
+              <span className="h-2 w-10 rounded-full bg-white/80" />
+              <span className="h-2 w-6 rounded-full bg-white/30" />
+              <span className="h-2 w-6 rounded-full bg-white/30" />
+              <span className="h-2 w-6 rounded-full bg-white/30" />
+            </div>
+          </div>
+        </div>
+
         <div className="rounded-2xl border border-black/5 p-6">
           <div className="flex items-center gap-3 mb-5">
             <Film className="h-6 w-6 text-accent-600" />
 
             <h2 className="text-xl font-semibold">
-              AI Video Lesson
+              Animated Lesson
             </h2>
           </div>
 
-          <div className="rounded-xl bg-black text-white p-8 text-center">
-            <Film className="h-12 w-12 mx-auto mb-4 opacity-80" />
-
-            <p className="font-semibold">
-              AI Lesson Generated
-            </p>
-
-            <p className="text-sm opacity-70 mt-2">
-              Video generation will be connected next.
-            </p>
-          </div>
-
-          <div className="mt-5 whitespace-pre-wrap text-sm leading-7 text-ink-soft">
+          <div className="whitespace-pre-wrap text-sm leading-7 text-ink-soft">
             {text}
           </div>
         </div>
@@ -421,24 +489,43 @@ function AIContent({
   if (feature === 'remember') {
     return (
       <div className="space-y-5">
-        <div className="rounded-2xl bg-accent-50/60 p-6">
-          <Brain className="h-8 w-8 text-accent-600 mb-4" />
+        <div className="rounded-2xl bg-gradient-to-br from-accent-50 to-primary-50 p-6">
+          <div className="flex items-center gap-3">
+            <div className="h-12 w-12 rounded-xl bg-white flex items-center justify-center shadow-sm">
+              <Volume2 className="h-6 w-6 text-accent-600" />
+            </div>
 
-          <h2 className="text-xl font-semibold">
-            AI Memory Aid
-          </h2>
+            <div>
+              <p className="text-xs uppercase tracking-wider text-ink-faint">
+                NEXORA MEMORY STUDIO
+              </p>
 
-          <p className="text-sm text-ink-soft mt-2">
-            Memory technique for {topic}.
-          </p>
+              <h2 className="text-xl font-semibold">
+                {topic} Memory Song
+              </h2>
+            </div>
+          </div>
+
+          <div className="mt-6 flex items-center gap-1">
+            {[1, 2, 3, 4, 5, 6, 7, 8].map((bar) => (
+              <div
+                key={bar}
+                className="w-2 rounded-full bg-accent-500 animate-pulse"
+                style={{
+                  height: `${12 + (bar % 4) * 8}px`,
+                  animationDelay: `${bar * 80}ms`,
+                }}
+              />
+            ))}
+          </div>
         </div>
 
         <div className="rounded-2xl border border-black/5 p-6">
           <div className="flex items-center gap-3 mb-4">
-            <Volume2 className="h-5 w-5 text-accent-600" />
+            <Brain className="h-6 w-6 text-accent-600" />
 
-            <h3 className="font-semibold">
-              Original Memory Song / Mnemonic
+            <h3 className="font-semibold text-xl">
+              Original Memory Song
             </h3>
           </div>
 
@@ -479,10 +566,10 @@ function AIContent({
                   setShowAnswer(false)
                 }}
                 className={
-                  'w-full text-left rounded-xl border p-4 ' +
+                  'w-full text-left rounded-xl border p-4 transition ' +
                   (selected
                     ? 'border-accent-500 bg-accent-50'
-                    : 'border-black/10')
+                    : 'border-black/10 hover:bg-black/5')
                 }
               >
                 {option}
