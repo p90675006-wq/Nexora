@@ -1,39 +1,91 @@
 import { supabase } from './supabase'
 
-export async function testNexoraAI(topic = 'Matrix') {
+async function callAI(body) {
   const { data, error } = await supabase.functions.invoke(
     'dynamic-action',
     {
-      body: {
-        action: 'test',
-        topic,
-      },
+      body,
     }
   )
 
   if (error) {
-    throw error
+    let message = error.message || 'AI request failed.'
+
+    if (error.context) {
+      try {
+        const response = error.context
+        const text = await response.text()
+
+        if (text) {
+          try {
+            const parsed = JSON.parse(text)
+            message = parsed.error || parsed.message || text
+          } catch {
+            message = text
+          }
+        }
+      } catch {
+        // Keep the original error message.
+      }
+    }
+
+    throw new Error(message)
+  }
+
+  if (!data) {
+    throw new Error('AI returned an empty response.')
+  }
+
+  if (data.success === false) {
+    throw new Error(data.error || 'AI request failed.')
   }
 
   return data
 }
 
-export async function generateAITest(topic, { difficulty = 'medium', count = 5 } = {}) {
-  const { data, error } = await supabase.functions.invoke(
-    'dynamic-action',
-    {
-      body: {
-        action: 'generate-test',
-        topic,
-        difficulty,
-        count,
-      },
-    }
-  )
+export async function testNexoraAI(topic = 'Matrix') {
+  return callAI({
+    action: 'test',
+    topic,
+  })
+}
 
-  if (error) {
-    throw error
-  }
+export async function generateAITest(
+  topic,
+  { difficulty = 'medium', count = 5 } = {}
+) {
+  return callAI({
+    action: 'generate-test',
+    topic,
+    difficulty,
+    count,
+  })
+}
 
-  return data
+export async function summarizeTopic(topic) {
+  return callAI({
+    action: 'summarize',
+    topic,
+  })
+}
+
+export async function generateVideoLesson(topic) {
+  return callAI({
+    action: 'video',
+    topic,
+  })
+}
+
+export async function generateMemorySong(topic) {
+  return callAI({
+    action: 'song',
+    topic,
+  })
+}
+
+export async function generatePuzzle(topic) {
+  return callAI({
+    action: 'puzzle',
+    topic,
+  })
 }
