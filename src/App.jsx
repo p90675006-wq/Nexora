@@ -14,84 +14,49 @@ import Dashboard from './pages/Dashboard.jsx'
 import TopicInput from './pages/TopicInput.jsx'
 import LearningHub from './pages/LearningHub.jsx'
 import LearningFeaturePage from './pages/LearningFeaturePage.jsx'
+
 import Notes from './pages/Notes.jsx'
-import ComingSoonPage from './pages/ComingSoonPage.jsx'
+import PYQs from './pages/PYQs.jsx'
+import Games from './pages/Games.jsx'
+import Progress from './pages/Progress.jsx'
+import Revision from './pages/Revision.jsx'
+import Lectures from './pages/Lectures.jsx'
+import Profile from './pages/Profile.jsx'
 
 import NotFound from './pages/NotFound.jsx'
 
 export default function App() {
   return (
     <Routes>
-
-      {/* Marketing / entry points */}
       <Route path="/" element={<LandingPage />} />
-
       <Route path="/signup" element={<Signup />} />
-
       <Route path="/login" element={<Login />} />
 
+      <Route path="/onboarding/exam" element={<OnboardingExam />} />
+      <Route path="/onboarding/level" element={<OnboardingLevel />} />
+      <Route path="/onboarding/subjects" element={<OnboardingSubjects />} />
 
-      {/* Onboarding */}
-      <Route
-        path="/onboarding/exam"
-        element={<OnboardingExam />}
-      />
-
-      <Route
-        path="/onboarding/level"
-        element={<OnboardingLevel />}
-      />
-
-      <Route
-        path="/onboarding/subjects"
-        element={<OnboardingSubjects />}
-      />
-
-
-      {/* App shell */}
       <Route element={<AppLayout />}>
+        <Route path="/dashboard" element={<Dashboard />} />
 
-        <Route
-          path="/dashboard"
-          element={<Dashboard />}
-        />
+        <Route path="/topic" element={<TopicInput />} />
 
-        <Route
-          path="/topic"
-          element={<TopicInput />}
-        />
-
-        <Route
-          path="/learn"
-          element={<LearningHub />}
-        />
-
+        <Route path="/learn" element={<LearningHub />} />
         <Route
           path="/learn/:feature"
           element={<LearningFeaturePage />}
         />
 
-        {/* Notes */}
-        <Route
-          path="/notes"
-          element={<Notes />}
-        />
-
-        {/* Remaining placeholder pages */}
-        <Route
-          path="/coming-soon/:feature"
-          element={<ComingSoonPage />}
-        />
-
+        <Route path="/notes" element={<Notes />} />
+        <Route path="/pyqs" element={<PYQs />} />
+        <Route path="/games" element={<Games />} />
+        <Route path="/progress" element={<Progress />} />
+        <Route path="/revision" element={<Revision />} />
+        <Route path="/lectures" element={<Lectures />} />
+        <Route path="/profile" element={<Profile />} />
       </Route>
 
-
-      {/* 404 */}
-      <Route
-        path="*"
-        element={<NotFound />}
-      />
-
+      <Route path="*" element={<NotFound />} />
     </Routes>
   )
 }
