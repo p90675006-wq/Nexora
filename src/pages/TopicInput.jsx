@@ -1,345 +1,231 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
-  TrendingUp,
-  Trophy,
-  Target,
   BookOpen,
-  CheckCircle2,
-  Clock3,
-  Flame,
+  Sparkles,
+  ArrowRight,
 } from 'lucide-react'
+
 import Card from '../components/common/Card.jsx'
-import ProgressRing from '../components/common/ProgressRing.jsx'
+import Button from '../components/common/Button.jsx'
 
-const FEATURES = [
-  'learn',
-  'watch',
-  'remember',
-  'play',
-  'pyqs',
-  'analyze',
-  'revise',
-]
+import {
+  EXAMS,
+  SUBJECTS_BY_EXAM,
+  DIFFICULTY_LEVELS,
+} from '../data/examOptions.js'
 
-const FEATURE_LABELS = {
-  learn: 'Learn',
-  watch: 'Watch',
-  remember: 'Remember',
-  play: 'Play',
-  pyqs: 'PYQs',
-  analyze: 'Analyze',
-  revise: 'Revise',
-}
+export default function TopicInput() {
+  const navigate = useNavigate()
 
-export default function Progress() {
-  const [completedFeatures, setCompletedFeatures] = useState([])
-  const [topic, setTopic] = useState(null)
+  const [topic, setTopic] = useState('')
+  const [exam, setExam] = useState('neet')
+  const [subject, setSubject] = useState('Biology')
+  const [difficulty, setDifficulty] = useState('medium')
 
-  const [pyqScore, setPyqScore] = useState(0)
-  const [gameScore, setGameScore] = useState(0)
-  const [notesCount, setNotesCount] = useState(0)
+  const subjects = SUBJECTS_BY_EXAM[exam] || []
 
-  useEffect(() => {
-    loadProgress()
-  }, [])
+  const handleExamChange = (value) => {
+    setExam(value)
 
-  const loadProgress = () => {
-    const completed = JSON.parse(
-      localStorage.getItem('nexora_completed_features') || '[]'
-    )
+    const nextSubjects = SUBJECTS_BY_EXAM[value] || []
 
-    const currentTopic = JSON.parse(
-      localStorage.getItem('nexora_current_topic') || 'null'
-    )
-
-    const notes = JSON.parse(
-      localStorage.getItem('nexora_notes') || '[]'
-    )
-
-    setCompletedFeatures(completed)
-    setTopic(currentTopic)
-    setNotesCount(notes.length)
-
-    setPyqScore(
-      Number(localStorage.getItem('nexora_last_pyq_score') || 0)
-    )
-
-    setGameScore(
-      Number(localStorage.getItem('nexora_game_score') || 0)
-    )
+    setSubject(nextSubjects[0] || '')
   }
 
-  /*
-   * Count only completed features belonging
-   * to the current topic.
-   */
-  const topicCompleted = topic
-    ? completedFeatures.filter((item) =>
-        item.startsWith(`${topic.name}-`)
-      )
-    : []
+  const startLearning = () => {
+    const cleanTopic = topic.trim()
 
-  const completedCount = topicCompleted.length
+    if (!cleanTopic) {
+      return
+    }
 
-  const overallProgress =
-    FEATURES.length > 0
-      ? Math.round((completedCount / FEATURES.length) * 100)
-      : 0
+    const topicData = {
+      name: cleanTopic,
+      exam,
+      subject,
+      difficulty,
+      progress: 0,
+    }
+
+    localStorage.setItem(
+      'nexora_current_topic',
+      JSON.stringify(topicData)
+    )
+
+    const params = new URLSearchParams({
+      topic: cleanTopic,
+      exam,
+      subject,
+      difficulty,
+    })
+
+    navigate(`/learn?${params.toString()}`)
+  }
 
   return (
-    <div className="animate-fade-up">
+    <div className="max-w-4xl mx-auto animate-fade-up">
 
       {/* Header */}
       <div className="mb-8">
 
         <p className="text-sm text-ink-faint">
-          Your learning
+          Start learning
         </p>
 
-        <h1 className="text-3xl font-semibold">
-          Progress
+        <h1 className="text-3xl sm:text-4xl font-semibold mt-1">
+          What do you want to learn?
         </h1>
 
         <p className="mt-2 text-ink-soft">
-          Track what you have learned and what needs attention.
+          Enter a topic and Nexora will build your learning path.
         </p>
 
       </div>
 
-      {/* Current Topic */}
-      <Card className="p-6 sm:p-7">
+      <Card className="p-6 sm:p-8">
 
-        <div className="flex flex-col sm:flex-row items-center gap-7">
+        {/* Topic */}
+        <div>
 
-          <ProgressRing
-            percent={overallProgress}
-            size={105}
-            strokeWidth={8}
-            tone="primary"
-          />
+          <label className="block text-sm font-medium mb-2">
+            Topic
+          </label>
 
-          <div className="flex-1 text-center sm:text-left">
+          <div className="relative">
 
-            <p className="text-xs text-ink-faint uppercase tracking-wide">
-              Current Topic
-            </p>
+            <BookOpen className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-ink-faint" />
 
-            <h2 className="text-2xl font-semibold mt-1">
-              {topic?.name || 'No topic started yet'}
-            </h2>
-
-            {topic ? (
-              <p className="text-sm text-ink-soft mt-2">
-                {topic.exam || 'Exam'} ·{' '}
-                {topic.subject || 'Subject'}
-              </p>
-            ) : (
-              <p className="text-sm text-ink-soft mt-2">
-                Start a topic to begin tracking your progress.
-              </p>
-            )}
-
-            <p className="text-sm font-medium text-primary-700 mt-3">
-              {completedCount}/{FEATURES.length} learning activities completed
-            </p>
+            <input
+              type="text"
+              value={topic}
+              onChange={(e) => setTopic(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  startLearning()
+                }
+              }}
+              placeholder="e.g. Human Respiration"
+              className="w-full rounded-xl border border-black/10 bg-white pl-12 pr-4 py-3.5 outline-none transition focus:border-accent-500 focus:ring-2 focus:ring-accent-100"
+            />
 
           </div>
+
+        </div>
+
+        {/* Exam */}
+        <div className="mt-6">
+
+          <label className="block text-sm font-medium mb-2">
+            Exam
+          </label>
+
+          <select
+            value={exam}
+            onChange={(e) => handleExamChange(e.target.value)}
+            className="w-full rounded-xl border border-black/10 bg-white px-4 py-3.5 outline-none focus:border-accent-500"
+          >
+
+            {EXAMS.map((item) => (
+              <option
+                key={item.id}
+                value={item.id}
+              >
+                {item.label}
+              </option>
+            ))}
+
+          </select>
+
+        </div>
+
+        {/* Subject */}
+        <div className="mt-6">
+
+          <label className="block text-sm font-medium mb-2">
+            Subject
+          </label>
+
+          <select
+            value={subject}
+            onChange={(e) => setSubject(e.target.value)}
+            className="w-full rounded-xl border border-black/10 bg-white px-4 py-3.5 outline-none focus:border-accent-500"
+          >
+
+            {subjects.map((item) => (
+              <option
+                key={item}
+                value={item}
+              >
+                {item}
+              </option>
+            ))}
+
+          </select>
+
+        </div>
+
+        {/* Difficulty */}
+        <div className="mt-6">
+
+          <label className="block text-sm font-medium mb-2">
+            Difficulty
+          </label>
+
+          <div className="grid grid-cols-3 gap-3">
+
+            {DIFFICULTY_LEVELS.map((item) => {
+
+              const selected = difficulty === item.id
+
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => setDifficulty(item.id)}
+                  className={`rounded-xl border px-4 py-3 text-sm font-medium transition ${
+                    selected
+                      ? 'border-accent-500 bg-accent-50 text-accent-700'
+                      : 'border-black/10 hover:bg-black/5'
+                  }`}
+                >
+                  {item.label}
+                </button>
+              )
+            })}
+
+          </div>
+
+        </div>
+
+        {/* Start */}
+        <div className="mt-8">
+
+          <Button
+            type="button"
+            onClick={startLearning}
+            disabled={!topic.trim()}
+            className="w-full sm:w-auto"
+          >
+            <Sparkles className="h-4 w-4" />
+            Start Learning
+            <ArrowRight className="h-4 w-4" />
+          </Button>
 
         </div>
 
       </Card>
 
-      {/* Stats */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 mt-6">
+      {/* Info */}
+      <Card className="mt-6 p-5 bg-primary-50 border-primary-100">
 
-        <Stat
-          icon={Target}
-          title="PYQ Score"
-          value={`${pyqScore}/5`}
-        />
-
-        <Stat
-          icon={Trophy}
-          title="Game Score"
-          value={`${gameScore}/3`}
-        />
-
-        <Stat
-          icon={BookOpen}
-          title="Saved Notes"
-          value={notesCount}
-        />
-
-        <Stat
-          icon={TrendingUp}
-          title="Overall"
-          value={`${overallProgress}%`}
-        />
-
-      </div>
-
-      {/* Learning Loop */}
-      <div className="mt-8">
-
-        <div className="flex items-center justify-between mb-4">
-
-          <div>
-            <h2 className="text-xl font-semibold">
-              Learning Loop
-            </h2>
-
-            <p className="text-sm text-ink-soft mt-1">
-              Complete each step to master your topic.
-            </p>
-          </div>
-
-          <span className="text-sm font-medium text-primary-700">
-            {completedCount}/{FEATURES.length}
-          </span>
-
-        </div>
-
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-
-          {FEATURES.map((feature) => {
-
-            const isComplete = topicCompleted.some(
-              (item) => item === `${topic?.name}-${feature}`
-            )
-
-            return (
-              <FeatureCard
-                key={feature}
-                label={FEATURE_LABELS[feature]}
-                completed={isComplete}
-              />
-            )
-          })}
-
-        </div>
-
-      </div>
-
-      {/* Strength Analysis */}
-      <div className="grid md:grid-cols-3 gap-4 mt-8">
-
-        <AnalysisCard
-          title="Strong"
-          description={
-            completedCount >= 5
-              ? 'You are building strong consistency in this topic.'
-              : 'Complete more learning activities to identify your strongest areas.'
-          }
-          icon={CheckCircle2}
-        />
-
-        <AnalysisCard
-          title="In Progress"
-          description={
-            completedCount > 0
-              ? `${FEATURES.length - completedCount} activities are still waiting to be completed.`
-              : 'Start your first learning activity.'
-          }
-          icon={Clock3}
-        />
-
-        <AnalysisCard
-          title="Streak"
-          description="Keep returning every day to build a consistent study habit."
-          icon={Flame}
-        />
-
-      </div>
-
-      {/* Motivation */}
-      <Card className="mt-8 p-6 bg-primary-50 border-primary-100">
-
-        <h2 className="text-xl font-semibold">
-          Keep going 🚀
-        </h2>
-
-        <p className="mt-2 text-sm text-ink-soft max-w-2xl">
-          Understanding is only the first step. Complete the
-          learning loop, practise questions and revisit weak
-          areas regularly.
+        <p className="text-sm text-ink-soft">
+          💡 After starting, you'll get access to Learn, Watch,
+          Remember, Play, PYQs, Analyze and Revise.
         </p>
 
       </Card>
 
     </div>
-  )
-}
-
-function Stat({ icon: Icon, title, value }) {
-  return (
-    <Card className="p-5">
-
-      <Icon className="h-6 w-6 text-accent-600" />
-
-      <p className="mt-4 text-sm text-ink-soft">
-        {title}
-      </p>
-
-      <p className="mt-1 text-2xl font-semibold">
-        {value}
-      </p>
-
-    </Card>
-  )
-}
-
-function FeatureCard({ label, completed }) {
-  return (
-    <Card
-      className={`p-5 transition ${
-        completed
-          ? 'border-primary-200 bg-primary-50/40'
-          : ''
-      }`}
-    >
-
-      <div className="flex items-center justify-between">
-
-        <div>
-          <p className="font-semibold">
-            {label}
-          </p>
-
-          <p className="text-xs text-ink-faint mt-1">
-            {completed
-              ? 'Completed'
-              : 'Not completed yet'}
-          </p>
-        </div>
-
-        {completed && (
-          <CheckCircle2 className="h-5 w-5 text-primary-600" />
-        )}
-
-      </div>
-
-    </Card>
-  )
-}
-
-function AnalysisCard({
-  title,
-  description,
-  icon: Icon,
-}) {
-  return (
-    <Card className="p-5">
-
-      <Icon className="h-5 w-5 text-accent-600" />
-
-      <h3 className="font-semibold mt-4">
-        {title}
-      </h3>
-
-      <p className="text-sm text-ink-soft mt-2 leading-relaxed">
-        {description}
-      </p>
-
-    </Card>
   )
 }
