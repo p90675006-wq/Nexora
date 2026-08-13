@@ -29,57 +29,47 @@ import NotFound from './pages/NotFound.jsx'
 export default function App() {
   return (
     <Routes>
+      {/* Public Pages */}
       <Route path="/" element={<LandingPage />} />
       <Route path="/signup" element={<Signup />} />
       <Route path="/login" element={<Login />} />
 
+      {/* Onboarding */}
       <Route
         path="/onboarding/exam"
         element={<OnboardingExam />}
       />
-
       <Route
         path="/onboarding/level"
         element={<OnboardingLevel />}
       />
-
       <Route
         path="/onboarding/subjects"
         element={<OnboardingSubjects />}
       />
 
-      {/* Games */}
+      {/* Standalone Features */}
       <Route path="/games" element={<Games />} />
-
-      {/* AI Test */}
       <Route path="/ai-test" element={<AITest />} />
 
-      {/* Main app */}
+      {/* Main App */}
       <Route element={<AppLayout />}>
         <Route path="/dashboard" element={<Dashboard />} />
-
         <Route path="/topic" element={<TopicInput />} />
-
         <Route path="/learn" element={<LearningHub />} />
-
         <Route
           path="/learn/:feature"
           element={<LearningFeaturePage />}
         />
-
         <Route path="/notes" element={<Notes />} />
-
         <Route path="/pyqs" element={<PYQs />} />
-
         <Route path="/progress" element={<Progress />} />
-
         <Route path="/revision" element={<Revision />} />
-
         <Route path="/lectures" element={<Lectures />} />
-
         <Route path="/profile" element={<Profile />} />
       </Route>
 
+      {/* 404 */}
       <Route path="*" element={<NotFound />} />
     </Routes>
   )
