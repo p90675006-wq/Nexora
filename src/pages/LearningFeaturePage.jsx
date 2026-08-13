@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useParams, useSearchParams, Link } from 'react-router-dom'
 import {
   ArrowLeft,
@@ -14,9 +14,9 @@ import {
   Loader2,
   Volume2,
   Play,
-  Sparkles,
 } from 'lucide-react'
 
+import { supabase } from '../lib/supabase.js'
 import {
   summarizeTopic,
   generatePuzzle,
@@ -31,12 +31,12 @@ const FEATURE_CONFIG = {
   watch: {
     label: 'Watch',
     icon: Film,
-    description: 'Learn through an animated AI lesson.',
+    description: 'Learn the topic through an AI-generated video.',
   },
   remember: {
     label: 'Remember',
     icon: Brain,
-    description: 'Turn important concepts into a memorable AI song.',
+    description: 'Create an AI-powered memory song.',
   },
   play: {
     label: 'Play',
@@ -51,7 +51,7 @@ const FEATURE_CONFIG = {
   analyze: {
     label: 'Analyze',
     icon: BarChart3,
-    description: 'Get an advanced AI topic analysis.',
+    description: 'Get an AI-powered topic analysis.',
   },
   revise: {
     label: 'Revise',
@@ -85,6 +85,132 @@ export default function LearningFeaturePage() {
   const [selectedAnswer, setSelectedAnswer] = useState(null)
   const [showAnswer, setShowAnswer] = useState(false)
 
+  useEffect(() => {
+    return () => {
+      setAiContent(null)
+    }
+  }, [feature, topic])
+
+  async function callDynamicAction(body) {
+    const { data, error } = await supabase.functions.invoke(
+      'dynamic-action',
+      {
+        body,
+      }
+    )
+
+    if (error) {
+      let message = error.message || 'AI request failed.'
+
+      if (error.context) {
+        try {
+          const response = error.context
+          const raw = await response.text()
+
+          if (raw) {
+            try {
+              const parsed = JSON.parse(raw)
+              message =
+                parsed.error ||
+                parsed.message ||
+                message
+            } catch {
+              message = raw
+            }
+          }
+        } catch {
+          // Keep original message.
+        }
+      }
+
+      throw new Error(message)
+    }
+
+    if (!data) {
+      throw new Error('AI returned an empty response.')
+    }
+
+    if (data.success === false) {
+      throw new Error(
+        data.error || 'AI request failed.'
+      )
+    }
+
+    return data
+  }
+
+  async function startVideoGeneration() {
+    const started = await callDynamicAction({
+      action: 'video-start',
+      topic,
+    })
+
+    if (!started.operationName) {
+      throw new Error(
+        'Video generation started but no operation ID was returned.'
+      )
+    }
+
+    setAiContent({
+      type: 'video',
+      status: 'processing',
+      operationName: started.operationName,
+      topic,
+    })
+
+    let attempts = 0
+    const maxAttempts = 60
+
+    while (attempts < maxAttempts) {
+      attempts += 1
+
+      await new Promise((resolve) =>
+        setTimeout(resolve, 5000)
+      )
+
+      const status = await callDynamicAction({
+        action: 'video-status',
+        operationName: started.operationName,
+      })
+
+      if (status.ready && status.videoUri) {
+        setAiContent({
+          type: 'video',
+          status: 'ready',
+          videoUri: status.videoUri,
+          topic,
+        })
+
+        return
+      }
+    }
+
+    throw new Error(
+      'Video is taking too long to generate. Please try again.'
+    )
+  }
+
+  async function generateSong() {
+    const result = await callDynamicAction({
+      action: 'song',
+      topic,
+    })
+
+    if (!result.audioData) {
+      throw new Error(
+        'Song was generated but no audio was returned.'
+      )
+    }
+
+    setAiContent({
+      type: 'song',
+      topic,
+      audioData: result.audioData,
+      lyrics: result.lyrics || '',
+      mimeType: result.mimeType || 'audio/wav',
+    })
+  }
+
   async function runAI() {
     setLoading(true)
     setError('')
@@ -96,73 +222,32 @@ export default function LearningFeaturePage() {
       let result
 
       if (feature === 'learn') {
-        result = await summarizeTopic(
-          `${topic}
-
-Give an advanced but student-friendly explanation.
-Cover definition, core concepts, mechanism, important terminology,
-examples, exam-important facts, common mistakes and advanced points.`
-        )
+        result = await summarizeTopic(topic)
       } else if (feature === 'watch') {
-        result = await summarizeTopic(
-          `${topic}
-
-Create a complete animated educational lesson presentation.
-
-Structure it as:
-1. HOOK
-2. VISUAL INTRODUCTION
-3. MAIN CONCEPT 1
-4. MAIN CONCEPT 2
-5. MAIN CONCEPT 3
-6. SIMPLE REAL-LIFE ANALOGY
-7. EXAM ALERTS
-8. QUICK RECAP
-9. THREE QUIZ QUESTIONS
-
-Write concise scene-by-scene content that can be displayed as an animated lesson.
-Use visual descriptions such as diagrams, arrows, molecules, charts or process animations.
-Do NOT say that video generation is unavailable.`
-        )
+        await startVideoGeneration()
+        return
       } else if (feature === 'remember') {
-        result = await summarizeTopic(
-          `${topic}
-
-Create an ORIGINAL educational memory song.
-
-Include:
-- catchy title
-- short original lyrics
-- important concepts and facts
-- mnemonic/rhyme where useful
-- a short explanation of what each part helps remember
-
-Do not copy any existing song lyrics.
-Make it fun, catchy and suitable for students.`
-        )
-      } else if (feature === 'play' || feature === 'pyqs') {
+        await generateSong()
+        return
+      } else if (
+        feature === 'play' ||
+        feature === 'pyqs'
+      ) {
         result = await generatePuzzle(topic)
       } else if (feature === 'analyze') {
         result = await summarizeTopic(
-          `${topic}
-
-Give an advanced analysis including:
-important concepts, mechanism, exam importance,
-common mistakes, frequently tested facts,
-high-level connections and areas students should focus on.`
+          `${topic}. Give an advanced analysis including important concepts, common mistakes, exam importance and areas students should focus on.`
         )
       } else if (feature === 'revise') {
         result = await summarizeTopic(
-          `${topic}
-
-Create an advanced last-minute revision guide.
-Include definitions, formulas, facts, processes,
-important keywords, common mistakes and exam tips.`
+          `${topic}. Create an advanced revision guide with key definitions, formulas, facts, important points and last-minute exam tips.`
         )
       }
 
       if (!result) {
-        throw new Error('No AI response received.')
+        throw new Error(
+          'No AI response received.'
+        )
       }
 
       setAiContent(result)
@@ -185,7 +270,9 @@ important keywords, common mistakes and exam tips.`
 
     try {
       existing = JSON.parse(
-        localStorage.getItem('nexora_completed_features') || '[]'
+        localStorage.getItem(
+          'nexora_completed_features'
+        ) || '[]'
       )
     } catch {
       existing = []
@@ -196,7 +283,10 @@ important keywords, common mistakes and exam tips.`
     if (!existing.includes(topicKey)) {
       localStorage.setItem(
         'nexora_completed_features',
-        JSON.stringify([...existing, topicKey])
+        JSON.stringify([
+          ...existing,
+          topicKey,
+        ])
       )
     }
   }
@@ -256,38 +346,44 @@ important keywords, common mistakes and exam tips.`
         </div>
 
         <div className="mt-8">
-          {!loading && !aiContent && !error && (
-            <div className="rounded-2xl bg-primary-50 border border-primary-100 p-6 text-center">
-              <Icon className="h-10 w-10 mx-auto text-primary-700 mb-4" />
+          {!loading &&
+            !aiContent &&
+            !error && (
+              <div className="rounded-2xl bg-primary-50 border border-primary-100 p-6 text-center">
+                <Icon className="h-10 w-10 mx-auto text-primary-700 mb-4" />
 
-              <h2 className="text-xl font-semibold">
-                Ready to learn {topic}?
-              </h2>
+                <h2 className="text-xl font-semibold">
+                  Ready to learn {topic}?
+                </h2>
 
-              <p className="text-sm text-ink-soft mt-2">
-                Let Nexora AI create personalised content.
-              </p>
+                <p className="text-sm text-ink-soft mt-2">
+                  Let Nexora AI create personalised content.
+                </p>
 
-              <button
-                onClick={runAI}
-                className="mt-5 inline-flex items-center gap-2 rounded-xl bg-accent-600 px-6 py-3 text-white font-medium hover:opacity-90 transition"
-              >
-                Generate with AI
-                <ArrowRight className="h-4 w-4" />
-              </button>
-            </div>
-          )}
+                <button
+                  onClick={runAI}
+                  className="mt-5 inline-flex items-center gap-2 rounded-xl bg-accent-600 px-6 py-3 text-white font-medium"
+                >
+                  Generate with AI
+                  <ArrowRight className="h-4 w-4" />
+                </button>
+              </div>
+            )}
 
           {loading && (
             <div className="rounded-2xl border border-black/5 p-10 text-center">
               <Loader2 className="h-10 w-10 mx-auto animate-spin text-accent-600" />
 
               <h2 className="text-xl font-semibold mt-5">
-                Nexora AI is thinking...
+                {feature === 'watch'
+                  ? 'Creating your animated video...'
+                  : feature === 'remember'
+                  ? 'Creating your memory song...'
+                  : 'Nexora AI is thinking...'}
               </h2>
 
               <p className="text-sm text-ink-soft mt-2">
-                Creating your personalised content.
+                This may take a little time.
               </p>
             </div>
           )}
@@ -344,7 +440,7 @@ important keywords, common mistakes and exam tips.`
               <div className="flex flex-wrap gap-3 mt-4">
                 <button
                   onClick={reset}
-                  className="inline-flex items-center gap-2 rounded-xl border border-black/10 px-4 py-2.5 text-sm font-medium hover:bg-white"
+                  className="inline-flex items-center gap-2 rounded-xl border border-black/10 px-4 py-2.5 text-sm font-medium"
                 >
                   <RotateCcw className="h-4 w-4" />
                   Do Again
@@ -362,7 +458,7 @@ important keywords, common mistakes and exam tips.`
           ) : (
             <button
               onClick={markComplete}
-              className="inline-flex items-center gap-2 rounded-xl bg-accent-600 px-6 py-3 text-white font-medium hover:opacity-90 transition"
+              className="inline-flex items-center gap-2 rounded-xl bg-accent-600 px-6 py-3 text-white font-medium"
             >
               Mark as Complete
               <CheckCircle2 className="h-4 w-4" />
@@ -412,20 +508,22 @@ function AIContent({
             </h2>
 
             <div className="space-y-3">
-              {content.points.map((point, index) => (
-                <div
-                  key={index}
-                  className="flex gap-3 rounded-xl bg-primary-50/60 p-4"
-                >
-                  <span className="font-semibold text-primary-700">
-                    {index + 1}.
-                  </span>
+              {content.points.map(
+                (point, index) => (
+                  <div
+                    key={index}
+                    className="flex gap-3 rounded-xl bg-primary-50/60 p-4"
+                  >
+                    <span className="font-semibold text-primary-700">
+                      {index + 1}.
+                    </span>
 
-                  <p className="text-sm text-ink-soft">
-                    {point}
-                  </p>
-                </div>
-              ))}
+                    <p className="text-sm text-ink-soft">
+                      {point}
+                    </p>
+                  </div>
+                )
+              )}
             </div>
           </div>
         )}
@@ -436,108 +534,138 @@ function AIContent({
   }
 
   if (feature === 'watch') {
-    return (
-      <div className="space-y-5">
-        <div className="overflow-hidden rounded-2xl bg-black text-white shadow-card">
-          <div className="relative min-h-[280px] p-8 flex flex-col justify-center items-center text-center bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-900">
-            <div className="absolute top-5 right-5">
-              <Sparkles className="h-6 w-6 animate-pulse opacity-80" />
+    if (
+      content.status === 'processing'
+    ) {
+      return (
+        <div className="rounded-2xl border border-black/5 p-8 text-center">
+          <Loader2 className="h-12 w-12 mx-auto animate-spin text-accent-600" />
+
+          <h2 className="text-xl font-semibold mt-5">
+            Generating your animated lesson
+          </h2>
+
+          <p className="text-sm text-ink-soft mt-2">
+            Veo is creating the video for {topic}.
+          </p>
+
+          <p className="text-xs text-ink-faint mt-4">
+            Please keep this page open.
+          </p>
+        </div>
+      )
+    }
+
+    if (content.videoUri) {
+      return (
+        <div className="space-y-5">
+          <div className="rounded-2xl border border-black/5 p-5">
+            <div className="flex items-center gap-3 mb-5">
+              <Film className="h-6 w-6 text-accent-600" />
+
+              <div>
+                <h2 className="text-xl font-semibold">
+                  AI Video Lesson
+                </h2>
+
+                <p className="text-sm text-ink-soft">
+                  {topic}
+                </p>
+              </div>
             </div>
 
-            <div className="h-20 w-20 rounded-full bg-white/10 flex items-center justify-center mb-5">
-              <Play className="h-9 w-9 ml-1" />
+            <div className="overflow-hidden rounded-2xl bg-black">
+              <video
+                className="w-full aspect-video"
+                controls
+                playsInline
+                preload="metadata"
+                src={content.videoUri}
+              >
+                Your browser does not support video playback.
+              </video>
             </div>
 
-            <p className="text-xs uppercase tracking-[0.25em] opacity-60">
-              NEXORA AI LESSON
-            </p>
-
-            <h2 className="text-2xl sm:text-3xl font-semibold mt-3">
-              {topic}
-            </h2>
-
-            <p className="text-sm opacity-70 mt-3">
-              Animated educational lesson
-            </p>
-
-            <div className="flex gap-2 mt-6">
-              <span className="h-2 w-10 rounded-full bg-white/80" />
-              <span className="h-2 w-6 rounded-full bg-white/30" />
-              <span className="h-2 w-6 rounded-full bg-white/30" />
-              <span className="h-2 w-6 rounded-full bg-white/30" />
+            <div className="mt-4 flex items-center gap-2 text-sm text-green-700">
+              <Play className="h-4 w-4" />
+              Animated lesson ready
             </div>
           </div>
         </div>
-
-        <div className="rounded-2xl border border-black/5 p-6">
-          <div className="flex items-center gap-3 mb-5">
-            <Film className="h-6 w-6 text-accent-600" />
-
-            <h2 className="text-xl font-semibold">
-              Animated Lesson
-            </h2>
-          </div>
-
-          <div className="whitespace-pre-wrap text-sm leading-7 text-ink-soft">
-            {text}
-          </div>
-        </div>
-      </div>
-    )
+      )
+    }
   }
 
   if (feature === 'remember') {
+    let audioSrc = ''
+
+    if (content.audioData) {
+      if (
+        content.audioData.startsWith(
+          'data:'
+        )
+      ) {
+        audioSrc = content.audioData
+      } else {
+        audioSrc =
+          `data:${content.mimeType || 'audio/wav'};base64,${content.audioData}`
+      }
+    }
+
     return (
       <div className="space-y-5">
-        <div className="rounded-2xl bg-gradient-to-br from-accent-50 to-primary-50 p-6">
-          <div className="flex items-center gap-3">
-            <div className="h-12 w-12 rounded-xl bg-white flex items-center justify-center shadow-sm">
-              <Volume2 className="h-6 w-6 text-accent-600" />
-            </div>
+        <div className="rounded-2xl bg-accent-50/60 p-6">
+          <Brain className="h-8 w-8 text-accent-600 mb-4" />
 
-            <div>
-              <p className="text-xs uppercase tracking-wider text-ink-faint">
-                NEXORA MEMORY STUDIO
-              </p>
+          <h2 className="text-xl font-semibold">
+            AI Memory Song
+          </h2>
 
-              <h2 className="text-xl font-semibold">
-                {topic} Memory Song
-              </h2>
-            </div>
-          </div>
-
-          <div className="mt-6 flex items-center gap-1">
-            {[1, 2, 3, 4, 5, 6, 7, 8].map((bar) => (
-              <div
-                key={bar}
-                className="w-2 rounded-full bg-accent-500 animate-pulse"
-                style={{
-                  height: `${12 + (bar % 4) * 8}px`,
-                  animationDelay: `${bar * 80}ms`,
-                }}
-              />
-            ))}
-          </div>
+          <p className="text-sm text-ink-soft mt-2">
+            Original educational song for {topic}.
+          </p>
         </div>
 
-        <div className="rounded-2xl border border-black/5 p-6">
-          <div className="flex items-center gap-3 mb-4">
-            <Brain className="h-6 w-6 text-accent-600" />
+        {audioSrc && (
+          <div className="rounded-2xl border border-black/5 p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <Volume2 className="h-5 w-5 text-accent-600" />
 
-            <h3 className="font-semibold text-xl">
-              Original Memory Song
+              <h3 className="font-semibold">
+                Listen to your memory song
+              </h3>
+            </div>
+
+            <audio
+              className="w-full"
+              controls
+              preload="metadata"
+              src={audioSrc}
+            >
+              Your browser does not support audio playback.
+            </audio>
+          </div>
+        )}
+
+        {content.lyrics && (
+          <div className="rounded-2xl border border-black/5 p-6">
+            <h3 className="font-semibold mb-4">
+              Lyrics / Memory Aid
             </h3>
-          </div>
 
-          <div className="whitespace-pre-wrap text-sm leading-7 text-ink-soft">
-            {text}
+            <div className="whitespace-pre-wrap text-sm leading-7 text-ink-soft">
+              {content.lyrics}
+            </div>
           </div>
-        </div>
+        )}
       </div>
     )
   }
 
-  if (feature === 'play' || feature === 'pyqs') {
+  if (
+    feature === 'play' ||
+    feature === 'pyqs'
+  ) {
     return (
       <div className="rounded-2xl border border-black/5 p-6">
         <div className="flex items-center gap-3 mb-5">
@@ -555,32 +683,39 @@ function AIContent({
         </p>
 
         <div className="space-y-3 mt-6">
-          {content.options?.map((option, index) => {
-            const selected = selectedAnswer === index
+          {content.options?.map(
+            (option, index) => {
+              const selected =
+                selectedAnswer === index
 
-            return (
-              <button
-                key={index}
-                onClick={() => {
-                  setSelectedAnswer(index)
-                  setShowAnswer(false)
-                }}
-                className={
-                  'w-full text-left rounded-xl border p-4 transition ' +
-                  (selected
-                    ? 'border-accent-500 bg-accent-50'
-                    : 'border-black/10 hover:bg-black/5')
-                }
-              >
-                {option}
-              </button>
-            )
-          })}
+              return (
+                <button
+                  key={index}
+                  onClick={() => {
+                    setSelectedAnswer(index)
+                    setShowAnswer(false)
+                  }}
+                  className={
+                    'w-full text-left rounded-xl border p-4 ' +
+                    (selected
+                      ? 'border-accent-500 bg-accent-50'
+                      : 'border-black/10')
+                  }
+                >
+                  {option}
+                </button>
+              )
+            }
+          )}
         </div>
 
         <button
-          disabled={selectedAnswer === null}
-          onClick={() => setShowAnswer(true)}
+          disabled={
+            selectedAnswer === null
+          }
+          onClick={() =>
+            setShowAnswer(true)
+          }
           className="mt-6 rounded-xl bg-accent-600 px-6 py-3 text-white font-medium disabled:opacity-40"
         >
           Check Answer
@@ -588,7 +723,8 @@ function AIContent({
 
         {showAnswer && (
           <div className="mt-6 rounded-xl bg-accent-50/60 p-5">
-            {selectedAnswer === content.answer ? (
+            {selectedAnswer ===
+            content.answer ? (
               <p className="font-semibold text-green-700">
                 Correct! 🎉
               </p>
@@ -599,7 +735,10 @@ function AIContent({
             )}
 
             <p className="text-sm text-ink-soft mt-2">
-              Correct answer: {content.options?.[content.answer]}
+              Correct answer:{' '}
+              {content.options?.[
+                content.answer
+              ]}
             </p>
 
             {content.explanation && (
@@ -617,9 +756,20 @@ function AIContent({
     return (
       <div className="space-y-5">
         <div className="grid sm:grid-cols-3 gap-4">
-          <Stat title="AI Status" value="Analyzed" />
-          <Stat title="Topic" value={topic} />
-          <Stat title="Source" value="Nexora AI" />
+          <Stat
+            title="AI Status"
+            value="Analyzed"
+          />
+
+          <Stat
+            title="Topic"
+            value={topic}
+          />
+
+          <Stat
+            title="Source"
+            value="Nexora AI"
+          />
         </div>
 
         <div className="rounded-2xl bg-primary-50 p-6">
@@ -670,8 +820,7 @@ function KeyPoint({ topic }) {
           </p>
 
           <p className="text-sm text-ink-soft mt-1">
-            Don't just memorise {topic}. Explain it in your
-            own words and test yourself afterwards.
+            Don't just memorise {topic}. Explain it in your own words and test yourself afterwards.
           </p>
         </div>
       </div>
@@ -691,4 +840,4 @@ function Stat({ title, value }) {
       </p>
     </div>
   )
-      }
+}
