@@ -1,184 +1,648 @@
+[13/08, 10:52] Priyanshi: export const NAV_LINKS = [
+  {
+    id: 'home',
+    label: 'Home',
+    to: '/dashboard',
+    icon: 'Home',
+  },
+
+  {
+    id: 'learn',
+    label: 'Learn',
+    to: '/topic',
+    icon: 'BookOpen',
+  },
+
+  {
+    id: 'notes',
+    label: 'Notes',
+    to: '/notes',
+    icon: 'NotebookPen',
+  },
+
+  {
+    id: 'games',
+    label: 'Games',
+    to: '/coming-soon/games',
+    icon: 'Gamepad2',
+  },
+
+  {
+    id: 'pyqs',
+    label: 'PYQs',
+    to: '/coming-soon/pyqs',
+    icon: 'FileQuestion',
+  },
+
+  {
+    id: 'progress',
+    label: 'Progress',
+    to: '/coming-soon/progress',
+    icon: 'TrendingUp',
+  },
+
+  {
+    id: 'revision',
+    label: 'Revision',
+    to: '/coming-soon/revision',
+    icon: 'RotateCcw',
+  },
+
+  {
+    id: 'lectures',
+    label: 'Teacher Lectures',
+    to: '/coming-soon/lectures',
+    icon: 'Video',
+  },
+
+  {
+    id: 'profile',
+    label: 'Profile',
+    to: '/coming-soon/profile',
+    icon: 'User',
+  },
+]
+[13/08, 10:59] Priyanshi: import { useState } from 'react'
 import { useParams, useSearchParams, Link } from 'react-router-dom'
-import { ArrowLeft, BookOpen, Brain, Play, CheckCircle, BarChart3, RotateCcw, Sparkles } from 'lucide-react'
+import {
+  ArrowLeft,
+  ArrowRight,
+  BookOpen,
+  Brain,
+  Play,
+  Gamepad2,
+  FileQuestion,
+  BarChart3,
+  RotateCcw,
+  CheckCircle2,
+  Circle,
+  Sparkles,
+  Trophy,
+} from 'lucide-react'
 import { LEARNING_ACTIONS } from '../data/learningActions.js'
 
-const featureData = {
+const lessons = {
   learn: {
     icon: BookOpen,
     title: 'Learn',
-    heading: 'Understand the topic',
-    description: 'Learn the core concepts in a simple, structured way.',
-    items: [
-      'Start with the basic definition and core concepts.',
-      'Break the topic into smaller concepts.',
-      'Focus on important terms and examples.',
-      'Finish with a quick self-check.'
-    ]
+    description: 'Understand the topic step by step.',
+    sections: [
+      {
+        title: 'Start with the basics',
+        text: 'Begin by understanding the definition, purpose and fundamental concepts of the topic. Focus on why the concept is important before memorising details.',
+      },
+      {
+        title: 'Understand the core concept',
+        text: 'Break the topic into smaller ideas. Connect each idea with examples so that you can recall the concept instead of simply memorising it.',
+      },
+      {
+        title: 'Important points',
+        text: 'Identify definitions, processes, formulas, diagrams and facts that are most likely to be useful during practice and revision.',
+      },
+    ],
+    quiz: {
+      question: 'What is the best way to learn a new concept?',
+      options: [
+        'Only memorise the definition',
+        'Understand the concept and connect it with examples',
+        'Read it once and move on',
+        'Skip difficult parts',
+      ],
+      answer: 1,
+    },
   },
+
   watch: {
     icon: Play,
     title: 'Watch',
-    heading: 'Learn visually',
-    description: 'Use visual learning to understand difficult concepts.',
-    items: [
-      'Watch concept-based explanations.',
-      'Pause and revise important points.',
-      'Write down key observations.',
-      'Test yourself after watching.'
-    ]
+    description: 'Learn visually and reinforce your understanding.',
+    sections: [
+      {
+        title: 'Visual learning',
+        text: 'Use diagrams, animations and visual explanations to understand processes that are difficult to imagine from text alone.',
+      },
+      {
+        title: 'Active watching',
+        text: 'Do not watch passively. Pause when you see an important idea and try explaining it yourself.',
+      },
+      {
+        title: 'After watching',
+        text: 'Close the video and recall the main points. This turns visual learning into active recall.',
+      },
+    ],
+    quiz: {
+      question: 'What should you do after watching a concept video?',
+      options: [
+        'Immediately watch another video',
+        'Close it and recall the important points',
+        'Skip revision',
+        'Memorise the video',
+      ],
+      answer: 1,
+    },
   },
+
   remember: {
     icon: Brain,
     title: 'Remember',
-    heading: 'Build your memory',
-    description: 'Use active recall to remember what you study.',
-    items: [
-      'Recall the definition without looking.',
-      'Remember important formulas and facts.',
-      'Create mental associations.',
-      'Review difficult points again.'
-    ]
+    description: 'Use active recall and memory techniques.',
+    sections: [
+      {
+        title: 'Active recall',
+        text: 'Look away from your notes and try to explain the concept using your own words.',
+      },
+      {
+        title: 'Memory connections',
+        text: 'Create associations, mnemonics, stories or visual connections for information that is difficult to remember.',
+      },
+      {
+        title: 'Spaced revision',
+        text: 'Review difficult information repeatedly over increasing intervals instead of studying it only once.',
+      },
+    ],
+    quiz: {
+      question: 'Which technique is most useful for long-term retention?',
+      options: [
+        'Active recall and spaced revision',
+        'Reading the same page repeatedly',
+        'Highlighting everything',
+        'Studying only once',
+      ],
+      answer: 0,
+    },
   },
+
   play: {
-    icon: Sparkles,
+    icon: Gamepad2,
     title: 'Play',
-    heading: 'Learn through a challenge',
-    description: 'Turn revision into a quick learning game.',
-    items: [
-      'Answer a question from the topic.',
-      'Give yourself 30 seconds.',
-      'Check your answer.',
-      'Track your score.'
-    ]
+    description: 'Reinforce learning with a quick challenge.',
+    sections: [
+      {
+        title: 'Challenge yourself',
+        text: 'Turn revision into a challenge by answering questions without checking your notes.',
+      },
+      {
+        title: 'Beat your score',
+        text: 'Record your mistakes and try the same topic again after revising the weak concepts.',
+      },
+      {
+        title: 'Learn from mistakes',
+        text: 'Every incorrect answer is useful feedback. Find out why your answer was wrong before continuing.',
+      },
+    ],
+    quiz: {
+      question: 'What should you do after getting a question wrong?',
+      options: [
+        'Ignore it',
+        'Guess the next answer',
+        'Understand the mistake and revise the concept',
+        'Stop studying',
+      ],
+      answer: 2,
+    },
   },
-  practice: {
-    icon: CheckCircle,
-    title: 'Practice',
-    heading: 'Practice the topic',
-    description: 'Strengthen your understanding with questions.',
-    items: [
-      'Solve easy questions first.',
-      'Move to application-based questions.',
-      'Review every incorrect answer.',
-      'Repeat weak concepts.'
-    ]
+
+  pyqs: {
+    icon: FileQuestion,
+    title: 'PYQs',
+    description: 'Practice previous-year style questions.',
+    sections: [
+      {
+        title: 'Understand the pattern',
+        text: 'Previous-year questions help you understand the type, difficulty and concepts commonly tested in an examination.',
+      },
+      {
+        title: 'Solve before checking',
+        text: 'Attempt every question independently before looking at the solution.',
+      },
+      {
+        title: 'Analyse mistakes',
+        text: 'Do not only count your marks. Identify the concept behind every incorrect answer.',
+      },
+    ],
+    quiz: {
+      question: 'Why are PYQs useful?',
+      options: [
+        'They replace studying',
+        'They help understand exam patterns and tested concepts',
+        'They guarantee the same questions',
+        'They are only useful after exams',
+      ],
+      answer: 1,
+    },
   },
+
   analyze: {
     icon: BarChart3,
     title: 'Analyze',
-    heading: 'Analyze your preparation',
-    description: 'Find what you know and what needs more work.',
-    items: [
-      'Identify your strongest concepts.',
-      'Find topics that need revision.',
-      'Track your accuracy.',
-      'Plan your next study session.'
-    ]
+    description: 'Find your strengths and weak areas.',
+    sections: [
+      {
+        title: 'Track accuracy',
+        text: 'Compare the number of correct and incorrect answers to understand your current preparation level.',
+      },
+      {
+        title: 'Find weak topics',
+        text: 'Topics where you repeatedly make mistakes should receive additional study time.',
+      },
+      {
+        title: 'Plan smarter',
+        text: 'Use your performance to decide what to study next instead of spending equal time on every topic.',
+      },
+    ],
+    quiz: {
+      question: 'What should your analysis identify?',
+      options: [
+        'Only your strongest topic',
+        'Only your total study time',
+        'Both strengths and weak areas',
+        'Nothing useful',
+      ],
+      answer: 2,
+    },
   },
+
   revise: {
     icon: RotateCcw,
     title: 'Revise',
-    heading: 'Quick revision',
-    description: 'Refresh the most important information.',
-    items: [
-      'Review key definitions.',
-      'Recall important points.',
-      'Revise formulas and facts.',
-      'Finish with active recall.'
-    ]
-  }
+    description: 'Quickly refresh the most important information.',
+    sections: [
+      {
+        title: 'Quick recall',
+        text: 'Try recalling definitions, processes and formulas before looking at your notes.',
+      },
+      {
+        title: 'Focus on weak points',
+        text: 'Spend more revision time on information that you previously forgot or answered incorrectly.',
+      },
+      {
+        title: 'Final check',
+        text: 'Finish by explaining the complete concept in your own words without using your notes.',
+      },
+    ],
+    quiz: {
+      question: 'What should revision focus on most?',
+      options: [
+        'Only information you already know',
+        'Weak and frequently forgotten concepts',
+        'Reading everything from the beginning',
+        'Skipping difficult concepts',
+      ],
+      answer: 1,
+    },
+  },
 }
 
 export default function LearningFeaturePage() {
   const { feature } = useParams()
-  const [params] = useSearchParams()
+  const [searchParams] = useSearchParams()
 
-  const topic = params.get('topic') || 'this topic'
-  const action = LEARNING_ACTIONS.find((a) => a.id === feature)
+  const topic = searchParams.get('topic') || 'Your Topic'
 
-  const data = featureData[feature] || {
-    icon: BookOpen,
-    title: action?.label || 'Learn',
-    heading: `${action?.label || 'Learn'} "${topic}"`,
-    description: action?.desc || 'Continue learning this topic.',
-    items: [
-      'Review the important concepts.',
-      'Make short notes.',
-      'Practice questions.',
-      'Revise the difficult parts.'
-    ]
-  }
+  const action = LEARNING_ACTIONS.find(
+    (item) => item.id === feature
+  )
+
+  const data =
+    lessons[feature] || lessons.learn
 
   const Icon = data.icon
-  const hubUrl = `/learn?${params.toString()}`
+
+  const [started, setStarted] = useState(false)
+  const [section, setSection] = useState(0)
+  const [completed, setCompleted] = useState(false)
+
+  const [selectedAnswer, setSelectedAnswer] = useState(null)
+  const [quizFinished, setQuizFinished] = useState(false)
+
+  const currentSection = data.sections[section]
+  const totalSections = data.sections.length
+
+  const progress = Math.round(
+    ((section + (completed ? 1 : 0)) / totalSections) * 100
+  )
+
+  const startLearning = () => {
+    setStarted(true)
+
+    setTimeout(() => {
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth',
+      })
+    }, 100)
+  }
+
+  const nextSection = () => {
+    if (section < totalSections - 1) {
+      setSection(section + 1)
+
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth',
+      })
+    } else {
+      setCompleted(true)
+
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth',
+      })
+    }
+  }
+
+  const previousSection = () => {
+    if (section > 0) {
+      setSection(section - 1)
+
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth',
+      })
+    }
+  }
+
+  const submitQuiz = () => {
+    if (selectedAnswer === null) return
+    setQuizFinished(true)
+  }
+
+  const restart = () => {
+    setStarted(false)
+    setSection(0)
+    setCompleted(false)
+    setSelectedAnswer(null)
+    setQuizFinished(false)
+
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth',
+    })
+  }
 
   return (
     <div className="animate-fade-up max-w-4xl">
+
+      {/* Back */}
       <Link
-        to={hubUrl}
-        className="inline-flex items-center gap-1.5 text-sm text-ink-soft hover:text-ink mb-6"
+        to={`/learn?${searchParams.toString()}`}
+        className="inline-flex items-center gap-2 text-sm text-ink-soft hover:text-ink mb-6"
       >
         <ArrowLeft className="h-4 w-4" />
         Back to {topic}
       </Link>
 
+      {/* Header */}
       <div className="rounded-2xl border border-black/5 bg-white p-6 sm:p-8 shadow-card">
-        <div className="flex items-start gap-4 mb-8">
-          <div className="h-14 w-14 rounded-2xl bg-accent-50 flex items-center justify-center">
+
+        <div className="flex items-start gap-4">
+          <div className="h-14 w-14 shrink-0 rounded-2xl bg-accent-50 flex items-center justify-center">
             <Icon className="h-7 w-7 text-accent-600" />
           </div>
 
-          <div>
-            <p className="text-sm text-ink-faint mb-1">{data.title}</p>
+          <div className="flex-1">
+            <p className="text-sm text-ink-faint">
+              {action?.label || data.title}
+            </p>
+
             <h1 className="text-2xl sm:text-3xl font-semibold">
-              {data.heading}
+              {topic}
             </h1>
+
             <p className="text-ink-soft mt-2">
-              Topic: <span className="font-medium text-ink">{topic}</span>
+              {data.description}
             </p>
           </div>
         </div>
 
-        <div className="rounded-xl bg-accent-50/60 p-5 mb-6">
-          <p className="text-ink-soft">{data.description}</p>
-        </div>
+        {/* Not started */}
+        {!started && !completed && (
+          <div className="mt-8">
 
-        <h2 className="text-lg font-semibold mb-4">
-          Your study steps
-        </h2>
+            <div className="rounded-2xl bg-accent-50/60 p-6">
+              <div className="flex items-center gap-3 mb-3">
+                <Sparkles className="h-5 w-5 text-accent-600" />
 
-        <div className="space-y-3">
-          {data.items.map((item, index) => (
-            <div
-              key={item}
-              className="flex items-center gap-3 rounded-xl border border-black/5 p-4 hover:shadow-sm transition"
-            >
-              <div className="h-8 w-8 shrink-0 rounded-full bg-accent-100 flex items-center justify-center text-sm font-semibold text-accent-700">
-                {index + 1}
+                <h2 className="font-semibold">
+                  Ready to start?
+                </h2>
               </div>
 
-              <span className="text-sm sm:text-base">
-                {item}
-              </span>
+              <p className="text-sm text-ink-soft">
+                This lesson contains {totalSections} short
+                learning sections followed by a quick quiz.
+              </p>
             </div>
-          ))}
-        </div>
 
-        <div className="mt-8 flex flex-wrap gap-3">
-          <button
-            onClick={() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' })}
-            className="rounded-xl bg-accent-600 px-5 py-3 text-white font-medium hover:opacity-90 transition"
-          >
-            Start studying
-          </button>
+            <button
+              onClick={startLearning}
+              className="mt-6 inline-flex items-center gap-2 rounded-xl bg-accent-600 px-6 py-3 text-white font-medium hover:opacity-90 transition"
+            >
+              Start Studying
+              <ArrowRight className="h-4 w-4" />
+            </button>
 
-          <Link
-            to="/dashboard"
-            className="rounded-xl border border-black/10 px-5 py-3 font-medium hover:bg-black/5 transition"
-          >
-            Back to Dashboard
-          </Link>
-        </div>
+          </div>
+        )}
+
+        {/* Lesson */}
+        {started && !completed && (
+          <div className="mt-8">
+
+            {/* Progress */}
+            <div className="mb-8">
+              <div className="flex justify-between text-sm mb-2">
+                <span className="text-ink-soft">
+                  Lesson progress
+                </span>
+
+                <span className="font-medium">
+                  {section + 1}/{totalSections}
+                </span>
+              </div>
+
+              <div className="h-2 rounded-full bg-black/5 overflow-hidden">
+                <div
+                  className="h-full bg-accent-600 transition-all duration-300"
+                  style={{
+                    width: `${((section + 1) / totalSections) * 100}%`,
+                  }}
+                />
+              </div>
+            </div>
+
+            {/* Section */}
+            <div className="rounded-2xl border border-black/5 p-6">
+
+              <div className="flex items-center gap-3 mb-5">
+                <div className="h-10 w-10 rounded-full bg-accent-50 flex items-center justify-center">
+                  <span className="font-semibold text-accent-700">
+                    {section + 1}
+                  </span>
+                </div>
+
+                <h2 className="text-xl font-semibold">
+                  {currentSection.title}
+                </h2>
+              </div>
+
+              <p className="text-base leading-7 text-ink-soft">
+                {currentSection.text}
+              </p>
+
+            </div>
+
+            {/* Navigation */}
+            <div className="flex justify-between mt-6">
+
+              <button
+                onClick={previousSection}
+                disabled={section === 0}
+                className="inline-flex items-center gap-2 rounded-xl border border-black/10 px-5 py-3 font-medium disabled:opacity-40 hover:bg-black/5 transition"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                Previous
+              </button>
+
+              <button
+                onClick={nextSection}
+                className="inline-flex items-center gap-2 rounded-xl bg-accent-600 px-5 py-3 text-white font-medium hover:opacity-90 transition"
+              >
+                {section === totalSections - 1
+                  ? 'Finish Lesson'
+                  : 'Next'}
+
+                <ArrowRight className="h-4 w-4" />
+              </button>
+
+            </div>
+
+          </div>
+        )}
+
+        {/* Completed */}
+        {completed && (
+          <div className="mt-8">
+
+            {!quizFinished ? (
+              <>
+                <div className="rounded-2xl bg-accent-50/60 p-6 text-center">
+
+                  <div className="mx-auto h-16 w-16 rounded-full bg-accent-100 flex items-center justify-center">
+                    <CheckCircle2 className="h-8 w-8 text-accent-600" />
+                  </div>
+
+                  <h2 className="text-2xl font-semibold mt-4">
+                    Lesson Complete 🎉
+                  </h2>
+
+                  <p className="text-ink-soft mt-2">
+                    Great job! Now test what you learned.
+                  </p>
+
+                </div>
+
+                {/* Quiz */}
+                <div className="mt-8">
+
+                  <h2 className="text-xl font-semibold">
+                    Quick Quiz
+                  </h2>
+
+                  <p className="text-ink-soft mt-2 mb-6">
+                    {data.quiz.question}
+                  </p>
+
+                  <div className="space-y-3">
+                    {data.quiz.options.map((option, index) => {
+
+                      const selected =
+                        selectedAnswer === index
+
+                      return (
+                        <button
+                          key={option}
+                          onClick={() =>
+                            setSelectedAnswer(index)
+                          }
+                          className={`w-full text-left rounded-xl border p-4 transition ${
+                            selected
+                              ? 'border-accent-500 bg-accent-50'
+                              : 'border-black/10 hover:bg-black/5'
+                          }`}
+                        >
+                          <div className="flex items-center gap-3">
+
+                            {selected ? (
+                              <CheckCircle2 className="h-5 w-5 text-accent-600" />
+                            ) : (
+                              <Circle className="h-5 w-5 text-ink-faint" />
+                            )}
+
+                            <span>
+                              {option}
+                            </span>
+
+                          </div>
+                        </button>
+                      )
+                    })}
+                  </div>
+
+                  <button
+                    onClick={submitQuiz}
+                    disabled={selectedAnswer === null}
+                    className="mt-6 rounded-xl bg-accent-600 px-6 py-3 text-white font-medium disabled:opacity-40 hover:opacity-90 transition"
+                  >
+                    Submit Answer
+                  </button>
+
+                </div>
+              </>
+            ) : (
+              <div className="text-center">
+
+                <div className="mx-auto h-20 w-20 rounded-full bg-accent-50 flex items-center justify-center">
+                  <Trophy className="h-10 w-10 text-accent-600" />
+                </div>
+
+                <h2 className="text-2xl font-semibold mt-5">
+                  {selectedAnswer === data.quiz.answer
+                    ? 'Correct! 🎉'
+                    : 'Good attempt! 💪'}
+                </h2>
+
+                <p className="text-ink-soft mt-2">
+                  {selectedAnswer === data.quiz.answer
+                    ? 'You understood the concept correctly.'
+                    : `The correct answer was: ${data.quiz.options[data.quiz.answer]}`}
+                </p>
+
+                <div className="flex justify-center gap-3 mt-7">
+
+                  <button
+                    onClick={restart}
+                    className="inline-flex items-center gap-2 rounded-xl border border-black/10 px-5 py-3 font-medium hover:bg-black/5 transition"
+                  >
+                    <RotateCcw className="h-4 w-4" />
+                    Study Again
+                  </button>
+
+                  <Link
+                    to="/dashboard"
+                    className="inline-flex items-center gap-2 rounded-xl bg-accent-600 px-5 py-3 text-white font-medium hover:opacity-90 transition"
+                  >
+                    Dashboard
+                  </Link>
+
+                </div>
+
+              </div>
+            )}
+
+          </div>
+        )}
+
       </div>
     </div>
   )
