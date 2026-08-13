@@ -47,6 +47,10 @@ export default function App() {
         element={<OnboardingSubjects />}
       />
 
+      {/* Games */}
+      <Route path="/games" element={<Games />} />
+
+      {/* Main app */}
       <Route element={<AppLayout />}>
         <Route path="/dashboard" element={<Dashboard />} />
 
@@ -62,16 +66,6 @@ export default function App() {
         <Route path="/notes" element={<Notes />} />
 
         <Route path="/pyqs" element={<PYQs />} />
-
-        {/* TEMPORARY GAMES ROUTE TEST */}
-        <Route
-          path="/games"
-          element={
-            <div className="p-8 text-2xl font-semibold">
-              GAMES ROUTE WORKING 🎮
-            </div>
-          }
-        />
 
         <Route path="/progress" element={<Progress />} />
 
