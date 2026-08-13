@@ -17,6 +17,7 @@ import LearningFeaturePage from './pages/LearningFeaturePage.jsx'
 
 import Notes from './pages/Notes.jsx'
 import PYQs from './pages/PYQs.jsx'
+import Games from './pages/Games.jsx'
 import Progress from './pages/Progress.jsx'
 import Revision from './pages/Revision.jsx'
 import Lectures from './pages/Lectures.jsx'
@@ -47,61 +48,41 @@ export default function App() {
       />
 
       <Route element={<AppLayout />}>
-        <Route
-          path="/dashboard"
-          element={<Dashboard />}
-        />
+        <Route path="/dashboard" element={<Dashboard />} />
 
-        <Route
-          path="/topic"
-          element={<TopicInput />}
-        />
+        <Route path="/topic" element={<TopicInput />} />
 
-        <Route
-          path="/learn"
-          element={<LearningHub />}
-        />
+        <Route path="/learn" element={<LearningHub />} />
 
         <Route
           path="/learn/:feature"
           element={<LearningFeaturePage />}
         />
 
+        <Route path="/notes" element={<Notes />} />
+
+        <Route path="/pyqs" element={<PYQs />} />
+
+        {/* TEMPORARY GAMES ROUTE TEST */}
         <Route
-          path="/notes"
-          element={<Notes />}
+          path="/games"
+          element={
+            <div className="p-8 text-2xl font-semibold">
+              GAMES ROUTE WORKING 🎮
+            </div>
+          }
         />
 
-        <Route
-          path="/pyqs"
-          element={<PYQs />}
-        />
+        <Route path="/progress" element={<Progress />} />
 
-        <Route
-          path="/progress"
-          element={<Progress />}
-        />
+        <Route path="/revision" element={<Revision />} />
 
-        <Route
-          path="/revision"
-          element={<Revision />}
-        />
+        <Route path="/lectures" element={<Lectures />} />
 
-        <Route
-          path="/lectures"
-          element={<Lectures />}
-        />
-
-        <Route
-          path="/profile"
-          element={<Profile />}
-        />
+        <Route path="/profile" element={<Profile />} />
       </Route>
 
-      <Route
-        path="*"
-        element={<NotFound />}
-      />
+      <Route path="*" element={<NotFound />} />
     </Routes>
   )
 }
