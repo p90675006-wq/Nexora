@@ -1,156 +1,162 @@
 import { useState } from 'react'
-import { CheckCircle2, XCircle, ArrowRight, RotateCcw, Trophy } from 'lucide-react'
+import {
+  CheckCircle2,
+  XCircle,
+  ArrowRight,
+  RotateCcw,
+  Trophy,
+} from 'lucide-react'
 
-const questions = [
+const QUESTIONS = [
   {
-    question: 'Which of the following is the best way to prepare for an exam?',
+    q: 'Which approach is most effective for learning a new topic?',
     options: [
-      'Only read the textbook once',
-      'Understand concepts and practise questions',
-      'Memorise every sentence',
-      'Study only the night before',
+      'Memorising everything immediately',
+      'Understanding the concept and practising it',
+      'Reading only the summary',
+      'Skipping examples',
     ],
     answer: 1,
     explanation:
-      'Understanding concepts and practising questions helps you apply what you have learned and identify weak areas.',
+      'Understanding the concept and applying it through practice creates stronger learning.',
   },
   {
-    question: 'What should you do after getting a practice question wrong?',
+    q: 'What should you do after making a mistake in a question?',
     options: [
-      'Ignore the question',
-      'Memorise the answer only',
-      'Understand the mistake and revise the concept',
-      'Skip the entire topic',
+      'Ignore it',
+      'Memorise the answer',
+      'Find and understand the reason for the mistake',
+      'Skip the topic',
     ],
     answer: 2,
     explanation:
-      'Analysing mistakes helps you understand the underlying concept and prevents the same error from happening again.',
+      'Analysing mistakes helps identify weak concepts and prevents repeated errors.',
   },
   {
-    question: 'Why are previous-year questions useful?',
+    q: 'Why are previous-year questions useful?',
     options: [
-      'They guarantee the exact questions in the exam',
-      'They help you understand question patterns and important concepts',
-      'They eliminate the need for revision',
-      'They are useful only after the exam',
+      'They guarantee the exact exam questions',
+      'They show important concepts and question patterns',
+      'They replace the syllabus',
+      'They remove the need for revision',
     ],
     answer: 1,
     explanation:
-      'PYQs help you understand the type of questions asked and the concepts that are commonly tested.',
+      'PYQs help students understand how concepts are commonly tested.',
   },
   {
-    question: 'Which approach is most useful during revision?',
+    q: 'Which is an example of active recall?',
     options: [
-      'Read everything repeatedly',
-      'Focus mainly on weak concepts and mistakes',
-      'Avoid difficult topics',
-      'Study without testing yourself',
+      'Reading notes repeatedly',
+      'Highlighting every line',
+      'Trying to answer without looking at notes',
+      'Watching the same lecture again',
     ],
-    answer: 1,
-    explanation:
-      'Targeting weak concepts makes revision more efficient and improves your overall performance.',
-  },
-  {
-    question: 'What is active recall?',
-    options: [
-      'Reading the same page repeatedly',
-      'Trying to remember information without looking at the notes',
-      'Highlighting every sentence',
-      'Watching a video without taking a break',
-    ],
-    answer: 1,
+    answer: 2,
     explanation:
       'Active recall means retrieving information from memory instead of simply rereading it.',
+  },
+  {
+    q: 'What is the best use of revision time?',
+    options: [
+      'Only reading familiar topics',
+      'Focusing on weak concepts and mistakes',
+      'Avoiding difficult questions',
+      'Studying without testing yourself',
+    ],
+    answer: 1,
+    explanation:
+      'Targeting weak areas makes revision more effective.',
   },
 ]
 
 export default function PYQs() {
-  const [current, setCurrent] = useState(0)
+  const [index, setIndex] = useState(0)
   const [selected, setSelected] = useState(null)
-  const [submitted, setSubmitted] = useState(false)
+  const [checked, setChecked] = useState(false)
   const [score, setScore] = useState(0)
   const [finished, setFinished] = useState(false)
 
-  const question = questions[current]
+  const current = QUESTIONS[index]
 
-  const submitAnswer = () => {
+  const submit = () => {
     if (selected === null) return
 
-    setSubmitted(true)
+    setChecked(true)
 
-    if (selected === question.answer) {
-      setScore((prev) => prev + 1)
+    if (selected === current.answer) {
+      setScore((value) => value + 1)
     }
   }
 
-  const nextQuestion = () => {
-    if (current < questions.length - 1) {
-      setCurrent((prev) => prev + 1)
-      setSelected(null)
-      setSubmitted(false)
-    } else {
+  const next = () => {
+    if (index === QUESTIONS.length - 1) {
       setFinished(true)
+      localStorage.setItem(
+        'nexora_last_pyq_score',
+        String(score + (selected === current.answer ? 1 : 0))
+      )
+      return
     }
+
+    setIndex((value) => value + 1)
+    setSelected(null)
+    setChecked(false)
   }
 
   const restart = () => {
-    setCurrent(0)
+    setIndex(0)
     setSelected(null)
-    setSubmitted(false)
+    setChecked(false)
     setScore(0)
     setFinished(false)
   }
 
   if (finished) {
     const percentage = Math.round(
-      (score / questions.length) * 100
+      (score / QUESTIONS.length) * 100
     )
 
     return (
       <div className="max-w-3xl animate-fade-up">
-
-        <div className="rounded-2xl border border-black/5 bg-white p-8 shadow-card text-center">
-
-          <div className="mx-auto h-16 w-16 rounded-full bg-accent-50 flex items-center justify-center">
+        <div className="rounded-2xl border border-black/5 bg-white p-8 text-center shadow-card">
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-accent-50">
             <Trophy className="h-8 w-8 text-accent-600" />
           </div>
 
-          <h1 className="text-3xl font-semibold mt-5">
+          <h1 className="mt-5 text-3xl font-semibold">
             Practice Complete 🎉
           </h1>
 
-          <p className="text-ink-soft mt-2">
-            You scored {score} out of {questions.length}.
+          <p className="mt-2 text-ink-soft">
+            You scored {score} / {QUESTIONS.length}
           </p>
 
-          <div className="mt-7 rounded-2xl bg-accent-50/60 p-6">
+          <div className="mt-7 rounded-2xl bg-accent-50 p-6">
             <p className="text-sm text-ink-soft">
-              Your accuracy
+              Accuracy
             </p>
 
-            <p className="text-4xl font-bold mt-1">
+            <p className="mt-1 text-4xl font-bold">
               {percentage}%
             </p>
           </div>
 
           <button
             onClick={restart}
-            className="mt-7 inline-flex items-center gap-2 rounded-xl bg-accent-600 px-6 py-3 text-white font-medium"
+            className="mt-7 inline-flex items-center gap-2 rounded-xl bg-accent-600 px-6 py-3 font-medium text-white"
           >
             <RotateCcw className="h-4 w-4" />
             Practice Again
           </button>
-
         </div>
-
       </div>
     )
   }
 
   return (
     <div className="max-w-3xl animate-fade-up">
-
-      <div className="mb-6">
+      <div className="mb-7">
         <p className="text-sm text-ink-faint">
           Practice
         </p>
@@ -159,17 +165,15 @@ export default function PYQs() {
           Previous Year Questions
         </h1>
 
-        <p className="text-ink-soft mt-2">
-          Test your understanding and learn from your mistakes.
+        <p className="mt-2 text-ink-soft">
+          Practice questions and learn from every mistake.
         </p>
       </div>
 
-      {/* Progress */}
       <div className="mb-6">
-
-        <div className="flex justify-between text-sm mb-2">
+        <div className="mb-2 flex justify-between text-sm">
           <span className="text-ink-soft">
-            Question {current + 1} of {questions.length}
+            Question {index + 1} of {QUESTIONS.length}
           </span>
 
           <span className="font-medium">
@@ -177,126 +181,101 @@ export default function PYQs() {
           </span>
         </div>
 
-        <div className="h-2 rounded-full bg-black/5 overflow-hidden">
+        <div className="h-2 overflow-hidden rounded-full bg-black/5">
           <div
             className="h-full bg-accent-600 transition-all"
             style={{
-              width: `${((current + 1) / questions.length) * 100}%`,
+              width: `${((index + 1) / QUESTIONS.length) * 100}%`,
             }}
           />
         </div>
-
       </div>
 
-      {/* Question */}
-      <div className="rounded-2xl border border-black/5 bg-white p-6 sm:p-8 shadow-card">
-
+      <div className="rounded-2xl border border-black/5 bg-white p-6 shadow-card sm:p-8">
         <h2 className="text-xl font-semibold leading-7">
-          {question.question}
+          {current.q}
         </h2>
 
-        <div className="space-y-3 mt-7">
+        <div className="mt-7 space-y-3">
+          {current.options.map((option, optionIndex) => {
+            const isCorrect = optionIndex === current.answer
+            const isSelected = optionIndex === selected
 
-          {question.options.map((option, index) => {
-
-            const isSelected = selected === index
-            const isCorrect = index === question.answer
-
-            let classes =
+            let style =
               'border-black/10 hover:bg-black/5'
 
-            if (submitted && isCorrect) {
-              classes =
-                'border-green-500 bg-green-50'
+            if (checked && isCorrect) {
+              style = 'border-green-500 bg-green-50'
             } else if (
-              submitted &&
+              checked &&
               isSelected &&
               !isCorrect
             ) {
-              classes =
-                'border-red-500 bg-red-50'
+              style = 'border-red-500 bg-red-50'
             } else if (isSelected) {
-              classes =
-                'border-accent-500 bg-accent-50'
+              style = 'border-accent-500 bg-accent-50'
             }
 
             return (
               <button
                 key={option}
-                disabled={submitted}
-                onClick={() => setSelected(index)}
-                className={`w-full text-left rounded-xl border p-4 transition ${classes}`}
+                disabled={checked}
+                onClick={() => setSelected(optionIndex)}
+                className={`w-full rounded-xl border p-4 text-left transition ${style}`}
               >
                 <div className="flex items-center gap-3">
-
-                  {submitted && isCorrect ? (
-                    <CheckCircle2 className="h-5 w-5 text-green-600 shrink-0" />
-                  ) : submitted &&
+                  {checked && isCorrect ? (
+                    <CheckCircle2 className="h-5 w-5 shrink-0 text-green-600" />
+                  ) : checked &&
                     isSelected &&
                     !isCorrect ? (
-                    <XCircle className="h-5 w-5 text-red-600 shrink-0" />
+                    <XCircle className="h-5 w-5 shrink-0 text-red-600" />
                   ) : (
-                    <div
-                      className={`h-5 w-5 rounded-full border ${
-                        isSelected
-                          ? 'border-accent-600'
-                          : 'border-black/20'
-                      }`}
-                    />
+                    <div className="h-5 w-5 shrink-0 rounded-full border border-black/20" />
                   )}
 
                   <span>{option}</span>
-
                 </div>
               </button>
             )
           })}
-
         </div>
 
-        {/* Explanation */}
-        {submitted && (
-          <div className="mt-6 rounded-xl bg-accent-50/60 p-5">
-
+        {checked && (
+          <div className="mt-6 rounded-xl bg-accent-50 p-5">
             <p className="font-semibold">
               Explanation
             </p>
 
-            <p className="text-sm text-ink-soft mt-2 leading-6">
-              {question.explanation}
+            <p className="mt-2 text-sm leading-6 text-ink-soft">
+              {current.explanation}
             </p>
-
           </div>
         )}
 
-        {/* Buttons */}
         <div className="mt-7">
-
-          {!submitted ? (
+          {!checked ? (
             <button
-              onClick={submitAnswer}
+              onClick={submit}
               disabled={selected === null}
-              className="inline-flex items-center gap-2 rounded-xl bg-accent-600 px-6 py-3 text-white font-medium disabled:opacity-40"
+              className="rounded-xl bg-accent-600 px-6 py-3 font-medium text-white disabled:opacity-40"
             >
               Submit Answer
             </button>
           ) : (
             <button
-              onClick={nextQuestion}
-              className="inline-flex items-center gap-2 rounded-xl bg-accent-600 px-6 py-3 text-white font-medium"
+              onClick={next}
+              className="inline-flex items-center gap-2 rounded-xl bg-accent-600 px-6 py-3 font-medium text-white"
             >
-              {current === questions.length - 1
+              {index === QUESTIONS.length - 1
                 ? 'See Result'
                 : 'Next Question'}
 
               <ArrowRight className="h-4 w-4" />
             </button>
           )}
-
         </div>
-
       </div>
-
     </div>
   )
-              }
+}
