@@ -14,6 +14,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+
       - name: Checkout StudyMate
         uses: actions/checkout@v4
 
@@ -21,28 +22,29 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: npm
 
-      - name: Install dependencies
+      - name: Install project dependencies
         run: npm install
 
-      - name: Build StudyMate Web App
+      - name: Build StudyMate
         run: npm run build
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
 
-      - name: Install Capacitor CLI
-        run: npx cap --version
+      - name: Install Capacitor packages
+        run: |
+          npm install @capacitor/core@7 @capacitor/android@7
+          npm install --save-dev @capacitor/cli@7
 
       - name: Initialize Capacitor
         run: |
           npx cap init StudyMate com.studymate.app --web-dir dist
 
-      - name: Add Android Platform
+      - name: Add Android
         run: npx cap add android
 
-      - name: Sync Android Project
+      - name: Sync Capacitor
         run: npx cap sync android
 
       - name: Setup Java
@@ -51,14 +53,14 @@ jobs:
           distribution: temurin
           java-version: 21
 
-      - name: Setup Android SDK
+      - name: Setup Android
         uses: android-actions/setup-android@v3
 
       - name: Build Debug APK
         working-directory: android
         run: ./gradlew assembleDebug
 
-      - name: Upload StudyMate APK
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: StudyMate-APK
