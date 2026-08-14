@@ -71,70 +71,51 @@ export default function LearningFeaturePage() {
 
   const exam = searchParams.get('exam') || ''
   const subject = searchParams.get('subject') || ''
-  const difficulty =
-    searchParams.get('difficulty') || ''
+  const difficulty = searchParams.get('difficulty') || ''
 
   const config =
-    FEATURE_CONFIG[feature] ||
-    FEATURE_CONFIG.learn
+    FEATURE_CONFIG[feature] || FEATURE_CONFIG.learn
 
   const Icon = config.icon
 
-  const [completed, setCompleted] =
-    useState(false)
-
-  const [loading, setLoading] =
-    useState(false)
-
-  const [error, setError] =
-    useState('')
-
-  const [aiContent, setAiContent] =
-    useState(null)
-
-  const [selectedAnswer, setSelectedAnswer] =
-    useState(null)
-
-  const [showAnswer, setShowAnswer] =
-    useState(false)
+  const [completed, setCompleted] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [aiContent, setAiContent] = useState(null)
+  const [selectedAnswer, setSelectedAnswer] = useState(null)
+  const [showAnswer, setShowAnswer] = useState(false)
 
   useEffect(() => {
-    return () => {
-      if (
-        aiContent?.videoUrl
-      ) {
-        URL.revokeObjectURL(
-          aiContent.videoUrl
-        )
-      }
+    setCompleted(false)
+    setLoading(false)
+    setError('')
+    setAiContent(null)
+    setSelectedAnswer(null)
+    setShowAnswer(false)
 
-      setAiContent(null)
+    return () => {
+      if (aiContent?.videoUrl) {
+        URL.revokeObjectURL(aiContent.videoUrl)
+      }
     }
   }, [feature, topic])
 
   async function callDynamicAction(body) {
     const { data, error } =
-      await supabase.functions.invoke(
-        'dynamic-action',
-        {
-          body,
-        }
-      )
+      await supabase.functions.invoke('dynamic-action', {
+        body,
+      })
 
     if (error) {
-      let message =
-        error.message ||
-        'AI request failed.'
+      let message = error.message || 'AI request failed.'
 
       if (error.context) {
         try {
-          const raw =
-            await error.context.text()
+          const raw = await error.context.text()
 
           if (raw) {
             try {
-              const parsed =
-                JSON.parse(raw)
+              const parsed = JSON.parse(raw)
 
               message =
                 parsed.error ||
@@ -153,19 +134,14 @@ export default function LearningFeaturePage() {
     return data
   }
 
-  async function downloadGeneratedVideo(
-    operationName
-  ) {
+  async function downloadGeneratedVideo(operationName) {
     const { data, error } =
-      await supabase.functions.invoke(
-        'dynamic-action',
-        {
-          body: {
-            action: 'video-download',
-            operationName,
-          },
-        }
-      )
+      await supabase.functions.invoke('dynamic-action', {
+        body: {
+          action: 'video-download',
+          operationName,
+        },
+      })
 
     if (error) {
       throw new Error(
@@ -184,13 +160,10 @@ export default function LearningFeaturePage() {
 
     if (data instanceof Blob) {
       blob = data
-    } else if (
-      data instanceof ArrayBuffer
-    ) {
-      blob = new Blob(
-        [data],
-        { type: 'video/mp4' }
-      )
+    } else if (data instanceof ArrayBuffer) {
+      blob = new Blob([data], {
+        type: 'video/mp4',
+      })
     } else {
       throw new Error(
         'Video response was not a playable file.'
@@ -207,11 +180,10 @@ export default function LearningFeaturePage() {
   }
 
   async function startVideoGeneration() {
-    const started =
-      await callDynamicAction({
-        action: 'video-start',
-        topic,
-      })
+    const started = await callDynamicAction({
+      action: 'video-start',
+      topic,
+    })
 
     if (!started?.operationName) {
       throw new Error(
@@ -219,8 +191,7 @@ export default function LearningFeaturePage() {
       )
     }
 
-    const operationName =
-      started.operationName
+    const operationName = started.operationName
 
     setAiContent({
       type: 'video',
@@ -235,16 +206,14 @@ export default function LearningFeaturePage() {
     while (attempts < maxAttempts) {
       attempts += 1
 
-      await new Promise(
-        (resolve) =>
-          setTimeout(resolve, 5000)
+      await new Promise((resolve) =>
+        setTimeout(resolve, 5000)
       )
 
-      const status =
-        await callDynamicAction({
-          action: 'video-status',
-          operationName,
-        })
+      const status = await callDynamicAction({
+        action: 'video-status',
+        operationName,
+      })
 
       if (status?.ready) {
         setAiContent({
@@ -277,11 +246,10 @@ export default function LearningFeaturePage() {
   }
 
   async function generateSong() {
-    const result =
-      await callDynamicAction({
-        action: 'song',
-        topic,
-      })
+    const result = await callDynamicAction({
+      action: 'song',
+      topic,
+    })
 
     if (!result?.audioData) {
       throw new Error(
@@ -292,13 +260,9 @@ export default function LearningFeaturePage() {
     setAiContent({
       type: 'song',
       topic,
-      audioData:
-        result.audioData,
-      lyrics:
-        result.lyrics || '',
-      mimeType:
-        result.mimeType ||
-        'audio/mpeg',
+      audioData: result.audioData,
+      lyrics: result.lyrics || '',
+      mimeType: result.mimeType || 'audio/mpeg',
     })
   }
 
@@ -313,36 +277,26 @@ export default function LearningFeaturePage() {
       let result
 
       if (feature === 'learn') {
-        result =
-          await summarizeTopic(topic)
+        result = await summarizeTopic(topic)
       } else if (feature === 'watch') {
         await startVideoGeneration()
         return
-      } else if (
-        feature === 'remember'
-      ) {
+      } else if (feature === 'remember') {
         await generateSong()
         return
       } else if (
         feature === 'play' ||
         feature === 'pyqs'
       ) {
-        result =
-          await generatePuzzle(topic)
-      } else if (
-        feature === 'analyze'
-      ) {
-        result =
-          await summarizeTopic(
-            `${topic}. Give an advanced analysis including important concepts, common mistakes, exam importance and areas students should focus on.`
-          )
-      } else if (
-        feature === 'revise'
-      ) {
-        result =
-          await summarizeTopic(
-            `${topic}. Create an advanced revision guide with key definitions, formulas, facts, important points and last-minute exam tips.`
-          )
+        result = await generatePuzzle(topic)
+      } else if (feature === 'analyze') {
+        result = await summarizeTopic(
+          `${topic}. Give an advanced analysis including important concepts, common mistakes, exam importance and areas students should focus on.`
+        )
+      } else if (feature === 'revise') {
+        result = await summarizeTopic(
+          `${topic}. Create an advanced revision guide with key definitions, formulas, facts, important points and last-minute exam tips.`
+        )
       }
 
       if (!result) {
@@ -370,18 +324,16 @@ export default function LearningFeaturePage() {
     let existing = []
 
     try {
-      existing =
-        JSON.parse(
-          localStorage.getItem(
-            'nexora_completed_features'
-          ) || '[]'
-        )
+      existing = JSON.parse(
+        localStorage.getItem(
+          'nexora_completed_features'
+        ) || '[]'
+      )
     } catch {
       existing = []
     }
 
-    const topicKey =
-      `${topic}-${feature}`
+    const topicKey = `${topic}-${feature}`
 
     if (!existing.includes(topicKey)) {
       localStorage.setItem(
@@ -395,12 +347,8 @@ export default function LearningFeaturePage() {
   }
 
   function reset() {
-    if (
-      aiContent?.videoUrl
-    ) {
-      URL.revokeObjectURL(
-        aiContent.videoUrl
-      )
+    if (aiContent?.videoUrl) {
+      URL.revokeObjectURL(aiContent.videoUrl)
     }
 
     setCompleted(false)
@@ -410,15 +358,12 @@ export default function LearningFeaturePage() {
     setError('')
   }
 
-  const hubParams =
-    new URLSearchParams({
-      topic,
-      ...(exam ? { exam } : {}),
-      ...(subject ? { subject } : {}),
-      ...(difficulty
-        ? { difficulty }
-        : {}),
-    })
+  const hubParams = new URLSearchParams({
+    topic,
+    ...(exam ? { exam } : {}),
+    ...(subject ? { subject } : {}),
+    ...(difficulty ? { difficulty } : {}),
+  })
 
   return (
     <div className="max-w-4xl animate-fade-up">
@@ -453,15 +398,9 @@ export default function LearningFeaturePage() {
               {config.description}
             </p>
 
-            {(exam ||
-              subject ||
-              difficulty) && (
+            {(exam || subject || difficulty) && (
               <p className="text-xs text-ink-faint mt-2">
-                {[
-                  exam,
-                  subject,
-                  difficulty,
-                ]
+                {[exam, subject, difficulty]
                   .filter(Boolean)
                   .join(' · ')}
               </p>
@@ -484,12 +423,12 @@ export default function LearningFeaturePage() {
                 </h2>
 
                 <p className="text-sm text-ink-soft mt-2">
-                  Let Nexora AI create personalised content.
+                  Let StudyMate AI create personalised content.
                 </p>
 
                 <button
                   onClick={runAI}
-                  className="mt-5 inline-flex items-center gap-2 rounded-xl bg-accent-600 px-6 py-3 text-white font-medium"
+                  className="mt-5 inline-flex items-center gap-2 rounded-xl bg-accent-600 px-6 py-3 text-white font-medium hover:bg-accent-700"
                 >
                   Generate with AI
                   <ArrowRight className="h-4 w-4" />
@@ -508,7 +447,7 @@ export default function LearningFeaturePage() {
                   ? 'Creating your animated video...'
                   : feature === 'remember'
                   ? 'Creating your memory song...'
-                  : 'Nexora AI is thinking...'}
+                  : 'StudyMate AI is thinking...'}
               </h2>
 
               <p className="text-sm text-ink-soft mt-2">
@@ -626,8 +565,6 @@ function AIContent({
     content?.summary ||
     ''
 
-  /* LEARN */
-
   if (feature === 'learn') {
     return (
       <div className="space-y-5">
@@ -684,13 +621,9 @@ function AIContent({
     )
   }
 
-  /* WATCH */
-
   if (feature === 'watch') {
 
-    if (
-      content.status === 'processing'
-    ) {
+    if (content.status === 'processing') {
       return (
         <div className="rounded-2xl border border-black/5 p-8 text-center">
 
@@ -712,9 +645,7 @@ function AIContent({
       )
     }
 
-    if (
-      content.status === 'downloading'
-    ) {
+    if (content.status === 'downloading') {
       return (
         <div className="rounded-2xl border border-black/5 p-8 text-center">
 
@@ -780,24 +711,17 @@ function AIContent({
     }
   }
 
-  /* REMEMBER / SONG */
-
   if (feature === 'remember') {
 
     let audioSrc = ''
 
     if (content.audioData) {
       audioSrc =
-        content.audioData.startsWith(
-          'data:'
-        )
+        content.audioData.startsWith('data:')
           ? content.audioData
           : `data:${
-              content.mimeType ||
-              'audio/mpeg'
-            };base64,${
-              content.audioData
-            }`
+              content.mimeType || 'audio/mpeg'
+            };base64,${content.audioData}`
     }
 
     return (
@@ -859,202 +783,222 @@ function AIContent({
       </div>
     )
   }
-
-  /* PLAY / PYQS */
-
   if (
     feature === 'play' ||
     feature === 'pyqs'
   ) {
+    const options =
+      content.options ||
+      content.choices ||
+      []
+
+    const correctAnswer =
+      content.answer ||
+      content.correctAnswer ||
+      content.correct_option
+
     return (
-      <div className="rounded-2xl border border-black/5 p-6">
+      <div className="space-y-5">
 
-        <div className="flex items-center gap-3 mb-5">
+        <div className="rounded-2xl border border-black/5 p-6">
 
-          <FileQuestion className="h-6 w-6 text-accent-600" />
+          <div className="flex items-center gap-3 mb-5">
 
-          <h2 className="text-xl font-semibold">
-            {feature === 'play'
-              ? 'AI Challenge'
-              : 'AI Practice Question'}
-          </h2>
+            <FileQuestion className="h-6 w-6 text-accent-600" />
 
-        </div>
+            <h2 className="text-xl font-semibold">
+              {feature === 'play'
+                ? 'AI Challenge'
+                : 'AI Practice Question'}
+            </h2>
 
-        <p className="font-semibold leading-7">
-          {content.question}
-        </p>
+          </div>
 
-        <div className="space-y-3 mt-6">
+          <p className="font-semibold leading-7">
+            {content.question}
+          </p>
 
-          {content.options?.map(
-            (option, index) => {
+          {options.length > 0 && (
+            <div className="mt-6 space-y-3">
 
-              const selected =
-                selectedAnswer === index
+              {options.map((option, index) => {
 
-              return (
-                <button
-                  key={index}
-                  onClick={() => {
-                    setSelectedAnswer(
-                      index
-                    )
-                    setShowAnswer(false)
-                  }}
-                  className={
-                    'w-full text-left rounded-xl border p-4 ' +
-                    (selected
-                      ? 'border-accent-500 bg-accent-50'
-                      : 'border-black/10')
-                  }
-                >
-                  {option}
-                </button>
-              )
-            }
+                const optionValue =
+                  typeof option === 'string'
+                    ? option
+                    : option.text ||
+                      option.label ||
+                      option.value ||
+                      ''
+
+                const isSelected =
+                  selectedAnswer === optionValue
+
+                const isCorrect =
+                  showAnswer &&
+                  (
+                    optionValue === correctAnswer ||
+                    index === Number(correctAnswer) ||
+                    String(index + 1) ===
+                      String(correctAnswer)
+                  )
+
+                return (
+                  <button
+                    key={index}
+                    type="button"
+                    onClick={() => {
+                      if (!showAnswer) {
+                        setSelectedAnswer(optionValue)
+                      }
+                    }}
+                    className={[
+                      'w-full text-left rounded-xl border px-4 py-3 transition-all',
+                      isCorrect
+                        ? 'border-green-400 bg-green-50'
+                        : isSelected
+                        ? 'border-accent-500 bg-accent-50'
+                        : 'border-border bg-white hover:border-accent-300 hover:bg-accent-50/40',
+                    ].join(' ')}
+                  >
+                    <span className="font-semibold mr-2">
+                      {String.fromCharCode(65 + index)}.
+                    </span>
+
+                    {optionValue}
+                  </button>
+                )
+              })}
+
+            </div>
+          )}
+
+          {!showAnswer && selectedAnswer && (
+            <button
+              type="button"
+              onClick={() => setShowAnswer(true)}
+              className="mt-6 inline-flex items-center gap-2 rounded-xl bg-accent-600 px-5 py-3 text-sm font-medium text-white"
+            >
+              Check Answer
+              <CheckCircle2 className="h-4 w-4" />
+            </button>
+          )}
+
+          {showAnswer && (
+            <div className="mt-6 rounded-xl bg-primary-50 border border-primary-100 p-5">
+
+              <p className="font-semibold text-primary-700">
+                {correctAnswer
+                  ? 'Correct Answer'
+                  : 'Answer'}
+              </p>
+
+              <p className="mt-2 text-sm text-ink-soft">
+                {correctAnswer || 'See the explanation below.'}
+              </p>
+
+              {content.explanation && (
+                <div className="mt-4">
+                  <p className="font-semibold text-sm">
+                    Explanation
+                  </p>
+
+                  <p className="mt-2 text-sm leading-6 text-ink-soft whitespace-pre-wrap">
+                    {content.explanation}
+                  </p>
+                </div>
+              )}
+
+            </div>
           )}
 
         </div>
 
-        <button
-          disabled={
-            selectedAnswer === null
-          }
-          onClick={() =>
-            setShowAnswer(true)
-          }
-          className="mt-6 rounded-xl bg-accent-600 px-6 py-3 text-white font-medium disabled:opacity-40"
-        >
-          Check Answer
-        </button>
-
-        {showAnswer && (
-          <div className="mt-6 rounded-xl bg-accent-50/60 p-5">
-
-            {selectedAnswer ===
-            content.answer ? (
-              <p className="font-semibold text-green-700">
-                Correct! 🎉
-              </p>
-            ) : (
-              <p className="font-semibold">
-                Good attempt! 💪
-              </p>
-            )}
-
-            <p className="text-sm text-ink-soft mt-2">
-              Correct answer:{' '}
-              {
-                content.options?.[
-                  content.answer
-                ]
-              }
-            </p>
-
-            {content.explanation && (
-              <p className="text-sm text-ink-soft mt-2">
-                {content.explanation}
-              </p>
-            )}
-
-          </div>
-        )}
-
       </div>
     )
   }
-
-  /* ANALYZE */
 
   if (feature === 'analyze') {
     return (
       <div className="space-y-5">
 
-        <div className="grid sm:grid-cols-3 gap-4">
+        <div className="rounded-2xl border border-black/5 p-6">
 
-          <Stat
-            title="AI Status"
-            value="Analyzed"
-          />
+          <div className="flex items-center gap-3 mb-5">
+            <BarChart3 className="h-6 w-6 text-accent-600" />
 
-          <Stat
-            title="Topic"
-            value={topic}
-          />
+            <h2 className="text-xl font-semibold">
+              Topic Analysis
+            </h2>
+          </div>
 
-          <Stat
-            title="Source"
-            value="Nexora AI"
-          />
-
-        </div>
-
-        <div className="rounded-2xl bg-primary-50 p-6">
-
-          <BarChart3 className="h-7 w-7 text-primary-700 mb-3" />
-
-          <h2 className="font-semibold text-xl">
-            Advanced Topic Analysis
-          </h2>
-
-          <div className="whitespace-pre-wrap text-sm leading-7 text-ink-soft mt-4">
+          <div className="whitespace-pre-wrap text-sm leading-7 text-ink-soft">
             {text}
           </div>
 
         </div>
 
+        <KeyPoint topic={topic} />
+
       </div>
     )
   }
-
-  /* REVISE */
 
   if (feature === 'revise') {
     return (
-      <div className="rounded-2xl border border-black/5 p-6">
+      <div className="space-y-5">
 
-        <div className="flex items-center gap-3 mb-5">
+        <div className="rounded-2xl border border-black/5 p-6">
 
-          <RotateCcw className="h-6 w-6 text-accent-600" />
+          <div className="flex items-center gap-3 mb-5">
+            <RotateCcw className="h-6 w-6 text-accent-600" />
 
-          <h2 className="text-xl font-semibold">
-            AI Revision Guide
-          </h2>
+            <h2 className="text-xl font-semibold">
+              Quick Revision Guide
+            </h2>
+          </div>
+
+          <div className="whitespace-pre-wrap text-sm leading-7 text-ink-soft">
+            {text}
+          </div>
 
         </div>
 
-        <div className="whitespace-pre-wrap text-sm leading-7 text-ink-soft">
-          {text}
-        </div>
+        <KeyPoint topic={topic} />
 
       </div>
     )
   }
 
-  return null
+  return (
+    <div className="rounded-2xl border border-black/5 p-6">
+      <p className="text-sm text-ink-soft whitespace-pre-wrap">
+        {text || 'No content available.'}
+      </p>
+    </div>
+  )
 }
 
 function KeyPoint({ topic }) {
   return (
-    <div className="rounded-xl bg-accent-50/60 p-5">
+    <div className="rounded-2xl bg-accent-50/60 border border-accent-100 p-5">
 
-      <div className="flex gap-3">
+      <div className="flex items-start gap-3">
 
-        <Lightbulb className="h-5 w-5 text-accent-600 shrink-0" />
+        <div className="h-9 w-9 shrink-0 rounded-xl bg-white flex items-center justify-center">
+          <Lightbulb className="h-5 w-5 text-accent-600" />
+        </div>
 
         <div>
-
-          <p className="font-medium">
-            Key point
+          <p className="text-sm font-semibold text-accent-700">
+            Study Tip
           </p>
 
-          <p className="text-sm text-ink-soft mt-1">
-            Don't just memorise {topic}.
-            Explain it in your own words
-            and test yourself afterwards.
+          <p className="mt-1 text-sm leading-6 text-ink-soft">
+            After studying {topic}, close your notes and
+            explain the concept in your own words. Then
+            solve a question without looking at the answer.
           </p>
-
         </div>
 
       </div>
@@ -1062,22 +1006,3 @@ function KeyPoint({ topic }) {
     </div>
   )
 }
-
-function Stat({
-  title,
-  value,
-}) {
-  return (
-    <div className="rounded-xl border border-black/5 p-5">
-
-      <p className="text-xs text-ink-faint">
-        {title}
-      </p>
-
-      <p className="font-semibold mt-2 capitalize truncate">
-        {value}
-      </p>
-
-    </div>
-  )
-      }
