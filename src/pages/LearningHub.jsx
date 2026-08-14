@@ -4,6 +4,11 @@ import {
   BarChart3,
   Gamepad2,
   RotateCcw,
+  Sparkles,
+  PlayCircle,
+  Brain,
+  FileQuestion,
+  BookOpen,
 } from 'lucide-react'
 
 import Card from '../components/common/Card.jsx'
@@ -12,16 +17,19 @@ import Button from '../components/common/Button.jsx'
 import { LEARNING_ACTIONS } from '../data/learningActions.js'
 import { EXAMS } from '../data/examOptions.js'
 
+const ICONS = {
+  learn: BookOpen,
+  watch: PlayCircle,
+  remember: Brain,
+  play: Gamepad2,
+  pyqs: FileQuestion,
+  analyze: BarChart3,
+  revise: RotateCcw,
+}
+
 export default function LearningHub() {
   const [params] = useSearchParams()
 
-  // URL values
-  const urlTopic = params.get('topic') || ''
-  const urlExam = params.get('exam') || ''
-  const urlSubject = params.get('subject') || ''
-  const urlDifficulty = params.get('difficulty') || ''
-
-  // Saved topic fallback
   let savedTopic = null
 
   try {
@@ -32,176 +40,273 @@ export default function LearningHub() {
     savedTopic = null
   }
 
-  const topic = urlTopic || savedTopic?.name || 'Untitled topic'
-  const examId = urlExam || savedTopic?.exam || ''
-  const subject = urlSubject || savedTopic?.subject || ''
+  const topic =
+    params.get('topic') ||
+    savedTopic?.name ||
+    'Your Topic'
+
+  const examId =
+    params.get('exam') ||
+    savedTopic?.exam ||
+    ''
+
+  const subject =
+    params.get('subject') ||
+    savedTopic?.subject ||
+    ''
+
   const difficulty =
-    urlDifficulty || savedTopic?.difficulty || ''
+    params.get('difficulty') ||
+    savedTopic?.difficulty ||
+    ''
 
   const examLabel =
-    EXAMS.find((e) => e.id === examId)?.label || examId
+    EXAMS.find((item) => item.id === examId)?.label ||
+    examId ||
+    'Exam Prep'
 
-  // Preserve topic information while navigating
   const topicParams = new URLSearchParams({
     topic,
-    ...(examId && { exam: examId }),
-    ...(subject && { subject }),
-    ...(difficulty && { difficulty }),
+    ...(examId ? { exam: examId } : {}),
+    ...(subject ? { subject } : {}),
+    ...(difficulty ? { difficulty } : {}),
   })
 
   return (
-    <div className="animate-fade-up space-y-8">
+    <div className="animate-fade-up space-y-7">
 
-      {/* Topic Header */}
-      <div>
-        <p className="text-sm text-ink-faint mb-2">
-          {[examLabel, subject]
-            .filter(Boolean)
-            .join(' | ') || 'Topic'}
+      {/* Hero */}
+      <section className="rounded-3xl bg-gradient-to-br from-primary-700 via-primary-600 to-accent-600 p-6 sm:p-8 text-white shadow-premium">
 
-          {difficulty && (
-            <span className="ml-2 inline-flex items-center rounded-full bg-accent-50 text-accent-700 text-xs font-medium px-2.5 py-0.5 capitalize">
-              {difficulty}
-            </span>
-          )}
-        </p>
+        <div className="flex items-start justify-between gap-5">
 
-        <h1 className="text-2xl sm:text-3xl font-semibold text-balance">
-          {topic}
-        </h1>
+          <div className="min-w-0">
 
-        <p className="mt-2 text-sm text-ink-soft">
-          Choose how you want to study this topic.
-        </p>
-      </div>
+            <div className="flex flex-wrap items-center gap-2 mb-4">
 
-      {/* Learning Actions */}
-      <div>
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-
-          {LEARNING_ACTIONS.map((action) => (
-            <Card
-              as={Link}
-              key={action.id}
-              to={`/learn/${action.id}?${topicParams.toString()}`}
-              className="p-5 flex items-start gap-4 hover:shadow-card-hover hover:-translate-y-0.5 transition-all"
-            >
-              <span
-                className="text-2xl leading-none"
-                aria-hidden="true"
-              >
-                {action.emoji}
+              <span className="inline-flex items-center rounded-full bg-white/15 px-3 py-1 text-xs font-semibold backdrop-blur">
+                {examLabel}
               </span>
 
-              <span>
-                <span className="block font-semibold mb-1">
-                  {action.label}
+              {subject && (
+                <span className="inline-flex items-center rounded-full bg-white/15 px-3 py-1 text-xs font-semibold backdrop-blur">
+                  {subject}
                 </span>
+              )}
 
-                <span className="block text-sm text-ink-soft">
-                  {action.desc}
+              {difficulty && (
+                <span className="inline-flex items-center rounded-full bg-white/15 px-3 py-1 text-xs font-semibold capitalize backdrop-blur">
+                  {difficulty}
                 </span>
-              </span>
-            </Card>
-          ))}
+              )}
+
+            </div>
+
+            <p className="text-sm text-white/70 mb-2">
+              Learning Hub
+            </p>
+
+            <h1 className="text-3xl sm:text-4xl font-bold tracking-tight break-words">
+              {topic}
+            </h1>
+
+            <p className="mt-3 text-sm sm:text-base text-white/80 max-w-2xl">
+              Choose the way you want to master this topic.
+              Learn, practise, revise and test yourself with AI.
+            </p>
+
+          </div>
+
+          <div className="hidden sm:flex h-16 w-16 rounded-2xl bg-white/10 items-center justify-center shrink-0">
+            <Sparkles className="h-8 w-8 text-white" />
+          </div>
 
         </div>
-      </div>
 
-      {/* Quick Actions */}
-      <div>
-        <h2 className="font-semibold mb-4">
-          Continue studying
-        </h2>
+      </section>
+
+      {/* Main learning actions */}
+      <section>
+
+        <div className="flex items-center justify-between mb-4">
+
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wider text-primary-700">
+              Study modes
+            </p>
+
+            <h2 className="text-xl sm:text-2xl font-bold mt-1">
+              How do you want to study?
+            </h2>
+          </div>
+
+        </div>
+
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+
+          {LEARNING_ACTIONS.map((action) => {
+
+            const Icon =
+              ICONS[action.id] || Sparkles
+
+            return (
+              <Link
+                key={action.id}
+                to={`/learn/${action.id}?${topicParams.toString()}`}
+                className="group"
+              >
+
+                <Card className="h-full p-5 border border-black/5 hover:border-primary-200 hover:shadow-premium hover:-translate-y-1 transition-all duration-200">
+
+                  <div className="flex items-start justify-between gap-4">
+
+                    <div className="h-12 w-12 rounded-2xl bg-primary-50 flex items-center justify-center group-hover:bg-primary-100 transition-colors">
+
+                      <Icon className="h-6 w-6 text-primary-700" />
+
+                    </div>
+
+                    <ArrowRight className="h-5 w-5 text-ink-faint group-hover:text-primary-700 group-hover:translate-x-1 transition-all" />
+
+                  </div>
+
+                  <h3 className="font-bold text-lg mt-5">
+                    {action.label}
+                  </h3>
+
+                  <p className="text-sm text-ink-soft mt-2 leading-6">
+                    {action.desc}
+                  </p>
+
+                  <div className="mt-5 text-xs font-semibold text-primary-700">
+                    Start →
+                  </div>
+
+                </Card>
+
+              </Link>
+            )
+          })}
+
+        </div>
+
+      </section>
+
+      {/* Continue section */}
+      <section>
+
+        <div className="flex items-center gap-2 mb-4">
+          <Sparkles className="h-5 w-5 text-accent-600" />
+          <h2 className="font-bold text-lg">
+            Continue studying
+          </h2>
+        </div>
 
         <div className="grid sm:grid-cols-3 gap-4">
 
-          {/* Progress */}
-          <Card className="p-5">
-            <BarChart3 className="h-5 w-5 text-primary-700 mb-3" />
+          <QuickCard
+            icon={BarChart3}
+            title="Track Progress"
+            description="Check your learning progress and completed activities."
+            to="/progress"
+            button="View Progress"
+          />
 
-            <h3 className="font-semibold mb-1">
-              Track Progress
-            </h3>
+          <QuickCard
+            icon={RotateCcw}
+            title="Revision"
+            description="Review topics that need another round of practice."
+            to="/revision"
+            button="Open Revision"
+          />
 
-            <p className="text-sm text-ink-soft mb-4">
-              See how your overall learning is progressing.
-            </p>
-
-            <Button
-              as={Link}
-              to="/progress"
-              variant="secondary"
-              size="sm"
-            >
-              View Progress
-              <ArrowRight className="h-4 w-4" />
-            </Button>
-          </Card>
-
-          {/* Revision */}
-          <Card className="p-5">
-            <RotateCcw className="h-5 w-5 text-primary-700 mb-3" />
-
-            <h3 className="font-semibold mb-1">
-              Revise Later
-            </h3>
-
-            <p className="text-sm text-ink-soft mb-4">
-              Review topics that need another look.
-            </p>
-
-            <Button
-              as={Link}
-              to="/revision"
-              variant="secondary"
-              size="sm"
-            >
-              Open Revision
-              <ArrowRight className="h-4 w-4" />
-            </Button>
-          </Card>
-
-          {/* Games */}
-          <Card className="p-5">
-            <Gamepad2 className="h-5 w-5 text-primary-700 mb-3" />
-
-            <h3 className="font-semibold mb-1">
-              Test Yourself
-            </h3>
-
-            <p className="text-sm text-ink-soft mb-4">
-              Turn your revision into a quick challenge.
-            </p>
-
-            <Button
-              as={Link}
-              to="/games"
-              variant="secondary"
-              size="sm"
-            >
-              Play a Game
-              <ArrowRight className="h-4 w-4" />
-            </Button>
-          </Card>
+          <QuickCard
+            icon={Gamepad2}
+            title="Test Yourself"
+            description="Challenge yourself with quick AI-powered questions."
+            to="/games"
+            button="Play Now"
+          />
 
         </div>
-      </div>
 
-      {/* Study Tip */}
-      <Card className="p-6 bg-primary-50 border-primary-100">
+      </section>
 
-        <p className="text-xs font-semibold uppercase tracking-wide text-primary-700 mb-2">
-          Study tip
-        </p>
+      {/* Tip */}
+      <Card className="p-5 sm:p-6 bg-accent-50 border-accent-100">
 
-        <p className="text-sm text-ink-soft">
-          Don&apos;t just read {topic}. Try to explain it in your own words,
-          then test yourself without looking at your notes.
-        </p>
+        <div className="flex gap-4">
+
+          <div className="h-10 w-10 shrink-0 rounded-xl bg-accent-100 flex items-center justify-center">
+            <Sparkles className="h-5 w-5 text-accent-700" />
+          </div>
+
+          <div>
+
+            <p className="text-xs font-bold uppercase tracking-wider text-accent-700">
+              Smart Study Tip
+            </p>
+
+            <p className="text-sm text-ink-soft mt-1 leading-6">
+              Don't just read {topic}. Learn it, explain it in your
+              own words, then test yourself without looking at your notes.
+            </p>
+
+          </div>
+
+        </div>
 
       </Card>
 
+      {/* Change topic */}
+      <div className="flex justify-center pb-2">
+
+        <Button
+          as={Link}
+          to="/topic"
+          variant="secondary"
+        >
+          <BookOpen className="h-4 w-4" />
+          Choose Another Topic
+        </Button>
+
+      </div>
+
     </div>
+  )
+}
+
+function QuickCard({
+  icon: Icon,
+  title,
+  description,
+  to,
+  button,
+}) {
+  return (
+    <Card className="p-5">
+
+      <Icon className="h-5 w-5 text-primary-700 mb-4" />
+
+      <h3 className="font-bold">
+        {title}
+      </h3>
+
+      <p className="text-sm text-ink-soft mt-2 leading-6">
+        {description}
+      </p>
+
+      <Button
+        as={Link}
+        to={to}
+        variant="secondary"
+        size="sm"
+        className="mt-4"
+      >
+        {button}
+        <ArrowRight className="h-4 w-4" />
+      </Button>
+
+    </Card>
   )
 }
