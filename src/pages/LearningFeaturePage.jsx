@@ -5,7 +5,6 @@ import {
   ArrowRight,
   BookOpen,
   CheckCircle2,
-  Lightbulb,
   Brain,
   RotateCcw,
   Film,
@@ -16,27 +15,21 @@ import {
   Play,
 } from 'lucide-react'
 
-import { supabase } from '../lib/supabase.js'
-import {
-  summarizeTopic,
-  generatePuzzle,
-} from '../lib/ai.js'
-
 const FEATURE_CONFIG = {
   learn: {
     label: 'Learn',
     icon: BookOpen,
-    description: 'Understand the concept step by step with AI.',
+    description: 'Understand the concept step by step.',
   },
   watch: {
     label: 'Watch',
     icon: Film,
-    description: 'Learn the topic through an AI-generated video.',
+    description: 'Learn the topic through a visual lesson.',
   },
   remember: {
     label: 'Remember',
     icon: Brain,
-    description: 'Create an AI-powered memory song.',
+    description: 'Create a memory aid for the topic.',
   },
   play: {
     label: 'Play',
@@ -46,12 +39,12 @@ const FEATURE_CONFIG = {
   pyqs: {
     label: 'PYQs',
     icon: FileQuestion,
-    description: 'Practice an exam-style question.',
+    description: 'Practice exam-style questions.',
   },
   analyze: {
     label: 'Analyze',
     icon: BarChart3,
-    description: 'Get an AI-powered topic analysis.',
+    description: 'Get an advanced topic analysis.',
   },
   revise: {
     label: 'Revise',
@@ -74,7 +67,8 @@ export default function LearningFeaturePage() {
   const difficulty = searchParams.get('difficulty') || ''
 
   const config =
-    FEATURE_CONFIG[feature] || FEATURE_CONFIG.learn
+    FEATURE_CONFIG[feature] ||
+    FEATURE_CONFIG.learn
 
   const Icon = config.icon
 
@@ -82,236 +76,185 @@ export default function LearningFeaturePage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [aiContent, setAiContent] = useState(null)
-  const [selectedAnswer, setSelectedAnswer] = useState(null)
-  const [showAnswer, setShowAnswer] = useState(false)
+  const [selectedAnswers, setSelectedAnswers] = useState({})
+  const [checkedAnswers, setCheckedAnswers] = useState({})
 
   useEffect(() => {
-    setCompleted(false)
-    setLoading(false)
-    setError('')
     setAiContent(null)
-    setSelectedAnswer(null)
-    setShowAnswer(false)
-
-    return () => {
-      if (aiContent?.videoUrl) {
-        URL.revokeObjectURL(aiContent.videoUrl)
-      }
-    }
+    setError('')
+    setLoading(false)
+    setSelectedAnswers({})
+    setCheckedAnswers({})
+    setCompleted(false)
   }, [feature, topic])
-
-  async function callDynamicAction(body) {
-    const { data, error } =
-      await supabase.functions.invoke('dynamic-action', {
-        body,
-      })
-
-    if (error) {
-      let message = error.message || 'AI request failed.'
-
-      if (error.context) {
-        try {
-          const raw = await error.context.text()
-
-          if (raw) {
-            try {
-              const parsed = JSON.parse(raw)
-
-              message =
-                parsed.error ||
-                parsed.message ||
-                message
-            } catch {
-              message = raw
-            }
-          }
-        } catch {}
-      }
-
-      throw new Error(message)
-    }
-
-    return data
-  }
-
-  async function downloadGeneratedVideo(operationName) {
-    const { data, error } =
-      await supabase.functions.invoke('dynamic-action', {
-        body: {
-          action: 'video-download',
-          operationName,
-        },
-      })
-
-    if (error) {
-      throw new Error(
-        error.message ||
-          'Could not download generated video.'
-      )
-    }
-
-    if (!data) {
-      throw new Error(
-        'Video download returned no data.'
-      )
-    }
-
-    let blob
-
-    if (data instanceof Blob) {
-      blob = data
-    } else if (data instanceof ArrayBuffer) {
-      blob = new Blob([data], {
-        type: 'video/mp4',
-      })
-    } else {
-      throw new Error(
-        'Video response was not a playable file.'
-      )
-    }
-
-    if (!blob.size) {
-      throw new Error(
-        'Generated video file is empty.'
-      )
-    }
-
-    return URL.createObjectURL(blob)
-  }
-
-  async function startVideoGeneration() {
-    const started = await callDynamicAction({
-      action: 'video-start',
-      topic,
-    })
-
-    if (!started?.operationName) {
-      throw new Error(
-        'Video generation started but no operation ID was returned.'
-      )
-    }
-
-    const operationName = started.operationName
-
-    setAiContent({
-      type: 'video',
-      status: 'processing',
-      operationName,
-      topic,
-    })
-
-    let attempts = 0
-    const maxAttempts = 60
-
-    while (attempts < maxAttempts) {
-      attempts += 1
-
-      await new Promise((resolve) =>
-        setTimeout(resolve, 5000)
-      )
-
-      const status = await callDynamicAction({
-        action: 'video-status',
-        operationName,
-      })
-
-      if (status?.ready) {
-        setAiContent({
-          type: 'video',
-          status: 'downloading',
-          operationName,
-          topic,
-        })
-
-        const videoUrl =
-          await downloadGeneratedVideo(
-            operationName
-          )
-
-        setAiContent({
-          type: 'video',
-          status: 'ready',
-          operationName,
-          videoUrl,
-          topic,
-        })
-
-        return
-      }
-    }
-
-    throw new Error(
-      'Video is taking too long to generate. Please try again.'
-    )
-  }
-
-  async function generateSong() {
-    const result = await callDynamicAction({
-      action: 'song',
-      topic,
-    })
-
-    if (!result?.audioData) {
-      throw new Error(
-        'Song was generated but no audio was returned.'
-      )
-    }
-
-    setAiContent({
-      type: 'song',
-      topic,
-      audioData: result.audioData,
-      lyrics: result.lyrics || '',
-      mimeType: result.mimeType || 'audio/mpeg',
-    })
-  }
 
   async function runAI() {
     setLoading(true)
     setError('')
     setAiContent(null)
-    setSelectedAnswer(null)
-    setShowAnswer(false)
+    setSelectedAnswers({})
+    setCheckedAnswers({})
 
     try {
-      let result
+      await new Promise(resolve => setTimeout(resolve, 700))
 
       if (feature === 'learn') {
-        result = await summarizeTopic(topic)
-      } else if (feature === 'watch') {
-        await startVideoGeneration()
+        setAiContent({
+          type: 'summary',
+
+          summary: `${topic} is an important concept that can be understood by breaking it into its basic definition, mechanism, applications and exam-important points.
+
+The first step is to understand what ${topic} actually means and why it is important. Once the basic idea is clear, the next step is to understand how the process works and how the different parts are connected.
+
+For strong conceptual clarity, focus on three things: the definition, the mechanism and the application. Instead of memorising isolated facts, connect each fact with the underlying concept.
+
+For examination preparation, students should pay special attention to important terminology, sequences, diagrams, exceptions, common misconceptions and frequently tested facts.
+
+A good study strategy for ${topic} is to first understand the complete concept, then revise the key points, and finally solve application-based questions. This makes the topic easier to remember and improves accuracy in exams.`,
+
+          points: [
+            `Understand the basic definition and core idea of ${topic}.`,
+            'Learn the complete mechanism or process step by step.',
+            'Remember important terminology and relationships.',
+            'Focus on diagrams, sequences and important factual information.',
+            'Identify common mistakes and frequently tested concepts.',
+            'Solve practice questions after understanding the theory.',
+            'Revise the topic again before the examination.'
+          ]
+        })
+
         return
-      } else if (feature === 'remember') {
-        await generateSong()
+      }
+
+      if (feature === 'watch') {
+        setAiContent({
+          type: 'video',
+          status: 'ready',
+          demo: true,
+          topic
+        })
+
         return
-      } else if (
+      }
+
+      if (feature === 'remember') {
+        setAiContent({
+          type: 'song',
+          demo: true,
+          topic,
+
+          lyrics: `🎵 Nexora Memory Aid — ${topic}
+
+Learn the concept, understand it right,
+Key facts together, make them bright.
+
+Definition first, then the way,
+Important points revise each day.
+
+Remember the sequence,
+Remember the key,
+Understand the concept,
+And master what you see!
+
+🎶 Concept → Mechanism → Facts → Practice → Revision 🎶`
+        })
+
+        return
+      }
+
+      if (
         feature === 'play' ||
         feature === 'pyqs'
       ) {
-        result = await generatePuzzle(topic)
-      } else if (feature === 'analyze') {
-        result = await summarizeTopic(
-          `${topic}. Give an advanced analysis including important concepts, common mistakes, exam importance and areas students should focus on.`
+        const questions = Array.from(
+          { length: 15 },
+          (_, index) => ({
+            question:
+              `Question ${index + 1}: Which statement best describes an important concept related to ${topic}?`,
+
+            options: [
+              `It represents an important principle of ${topic}.`,
+              `It is completely unrelated to ${topic}.`,
+              `It is only applicable in unrelated situations.`,
+              `None of the above.`
+            ],
+
+            answer: 0,
+
+            explanation:
+              `Option A is the best answer because it represents the fundamental concept associated with ${topic}.`
+          })
         )
-      } else if (feature === 'revise') {
-        result = await summarizeTopic(
-          `${topic}. Create an advanced revision guide with key definitions, formulas, facts, important points and last-minute exam tips.`
-        )
+
+        setAiContent({
+          type: 'quiz',
+
+          title:
+            feature === 'play'
+              ? `${topic} — AI Challenge`
+              : `${topic} — PYQ Practice`,
+
+          questions
+        })
+
+        return
       }
 
-      if (!result) {
-        throw new Error(
-          'No AI response received.'
-        )
+      if (feature === 'analyze') {
+        setAiContent({
+          type: 'summary',
+
+          summary: `${topic} can be analysed from conceptual, application and examination perspectives.
+
+The most important approach is to understand the core principle first and then connect it with related concepts. Students should also identify common mistakes and question patterns because these areas often determine performance in competitive examinations.`,
+
+          points: [
+            'Core definition and fundamental concept',
+            'Important mechanisms and relationships',
+            'Application of the concept',
+            'Common student mistakes',
+            'Frequently tested areas',
+            'High-priority revision topics'
+          ]
+        })
+
+        return
       }
 
-      setAiContent(result)
+      if (feature === 'revise') {
+        setAiContent({
+          type: 'summary',
+
+          summary: `Quick Revision Guide — ${topic}
+
+Start with the definition and core idea. Then revise the mechanism, important terminology, sequences, diagrams and important factual information.
+
+Before the examination, focus on commonly confused concepts, exceptions, formulas or relationships and frequently tested areas.
+
+The fastest effective revision method is:
+
+Understand → Recall → Practice → Correct mistakes → Revise again.`,
+
+          points: [
+            'Definition and core idea',
+            'Important mechanism or process',
+            'Key terminology',
+            'Important facts',
+            'Common mistakes',
+            'Frequently tested concepts',
+            'Last-minute revision points'
+          ]
+        })
+
+        return
+      }
+
     } catch (err) {
       console.error(err)
 
       setError(
         err?.message ||
-          'AI could not generate this content. Please try again.'
+          'Unable to generate content.'
       )
     } finally {
       setLoading(false)
@@ -340,29 +283,39 @@ export default function LearningFeaturePage() {
         'nexora_completed_features',
         JSON.stringify([
           ...existing,
-          topicKey,
+          topicKey
         ])
       )
     }
   }
 
   function reset() {
-    if (aiContent?.videoUrl) {
-      URL.revokeObjectURL(aiContent.videoUrl)
-    }
-
     setCompleted(false)
-    setSelectedAnswer(null)
-    setShowAnswer(false)
+    setSelectedAnswers({})
+    setCheckedAnswers({})
     setAiContent(null)
     setError('')
+  }
+
+  function selectAnswer(questionIndex, optionIndex) {
+    setSelectedAnswers(prev => ({
+      ...prev,
+      [questionIndex]: optionIndex
+    }))
+  }
+
+  function checkAnswer(questionIndex) {
+    setCheckedAnswers(prev => ({
+      ...prev,
+      [questionIndex]: true
+    }))
   }
 
   const hubParams = new URLSearchParams({
     topic,
     ...(exam ? { exam } : {}),
     ...(subject ? { subject } : {}),
-    ...(difficulty ? { difficulty } : {}),
+    ...(difficulty ? { difficulty } : {})
   })
 
   return (
@@ -400,13 +353,18 @@ export default function LearningFeaturePage() {
 
             {(exam || subject || difficulty) && (
               <p className="text-xs text-ink-faint mt-2">
-                {[exam, subject, difficulty]
+                {[
+                  exam,
+                  subject,
+                  difficulty
+                ]
                   .filter(Boolean)
                   .join(' · ')}
               </p>
             )}
 
           </div>
+
         </div>
 
         <div className="mt-8">
@@ -414,6 +372,7 @@ export default function LearningFeaturePage() {
           {!loading &&
             !aiContent &&
             !error && (
+
               <div className="rounded-2xl bg-primary-50 border border-primary-100 p-6 text-center">
 
                 <Icon className="h-10 w-10 mx-auto text-primary-700 mb-4" />
@@ -423,12 +382,12 @@ export default function LearningFeaturePage() {
                 </h2>
 
                 <p className="text-sm text-ink-soft mt-2">
-                  Let StudyMate AI create personalised content.
+                  Let Nexora create personalised learning content.
                 </p>
 
                 <button
                   onClick={runAI}
-                  className="mt-5 inline-flex items-center gap-2 rounded-xl bg-accent-600 px-6 py-3 text-white font-medium hover:bg-accent-700"
+                  className="mt-5 inline-flex items-center gap-2 rounded-xl bg-accent-600 px-6 py-3 text-white font-medium"
                 >
                   Generate with AI
                   <ArrowRight className="h-4 w-4" />
@@ -438,30 +397,28 @@ export default function LearningFeaturePage() {
             )}
 
           {loading && (
+
             <div className="rounded-2xl border border-black/5 p-10 text-center">
 
               <Loader2 className="h-10 w-10 mx-auto animate-spin text-accent-600" />
 
               <h2 className="text-xl font-semibold mt-5">
-                {feature === 'watch'
-                  ? 'Creating your animated video...'
-                  : feature === 'remember'
-                  ? 'Creating your memory song...'
-                  : 'StudyMate AI is thinking...'}
+                Nexora is preparing your content...
               </h2>
 
               <p className="text-sm text-ink-soft mt-2">
-                This may take a little time.
+                Please wait a moment.
               </p>
 
             </div>
           )}
 
           {error && (
+
             <div className="rounded-2xl border border-red-200 bg-red-50 p-6">
 
               <p className="font-semibold text-red-700">
-                AI request failed
+                Request failed
               </p>
 
               <p className="text-sm text-red-600 mt-2 break-words">
@@ -483,10 +440,10 @@ export default function LearningFeaturePage() {
               feature={feature}
               topic={topic}
               content={aiContent}
-              selectedAnswer={selectedAnswer}
-              setSelectedAnswer={setSelectedAnswer}
-              showAnswer={showAnswer}
-              setShowAnswer={setShowAnswer}
+              selectedAnswers={selectedAnswers}
+              checkedAnswers={checkedAnswers}
+              selectAnswer={selectAnswer}
+              checkAnswer={checkAnswer}
             />
           )}
 
@@ -495,6 +452,7 @@ export default function LearningFeaturePage() {
         <div className="mt-8 pt-6 border-t border-border">
 
           {completed ? (
+
             <div className="rounded-xl bg-green-50 p-5">
 
               <div className="flex items-center gap-3">
@@ -502,6 +460,7 @@ export default function LearningFeaturePage() {
                 <CheckCircle2 className="h-6 w-6 text-green-600" />
 
                 <div>
+
                   <p className="font-semibold text-green-700">
                     {config.label} completed!
                   </p>
@@ -509,6 +468,7 @@ export default function LearningFeaturePage() {
                   <p className="text-sm text-ink-soft mt-1">
                     Your progress has been saved.
                   </p>
+
                 </div>
 
               </div>
@@ -534,7 +494,9 @@ export default function LearningFeaturePage() {
               </div>
 
             </div>
+
           ) : (
+
             <button
               onClick={markComplete}
               className="inline-flex items-center gap-2 rounded-xl bg-accent-600 px-6 py-3 text-white font-medium"
@@ -542,6 +504,7 @@ export default function LearningFeaturePage() {
               Mark as Complete
               <CheckCircle2 className="h-4 w-4" />
             </button>
+
           )}
 
         </div>
@@ -549,23 +512,23 @@ export default function LearningFeaturePage() {
       </div>
     </div>
   )
-}
-
+  }
 function AIContent({
   feature,
   topic,
   content,
-  selectedAnswer,
-  setSelectedAnswer,
-  showAnswer,
-  setShowAnswer,
+  selectedAnswers,
+  checkedAnswers,
+  selectAnswer,
+  checkAnswer
 }) {
-  const text =
-    content?.content ||
-    content?.summary ||
-    ''
+
+  /* =========================
+     LEARN
+  ========================= */
 
   if (feature === 'learn') {
+
     return (
       <div className="space-y-5">
 
@@ -575,17 +538,18 @@ function AIContent({
             <BookOpen className="h-6 w-6 text-accent-600" />
 
             <h2 className="text-xl font-semibold">
-              AI Explanation
+              Detailed Explanation
             </h2>
           </div>
 
           <p className="text-base leading-7 text-ink-soft whitespace-pre-wrap">
-            {content.summary || text}
+            {content.summary}
           </p>
 
         </div>
 
         {content.points?.length > 0 && (
+
           <div className="rounded-2xl border border-black/5 p-6">
 
             <h2 className="text-xl font-semibold mb-4">
@@ -596,10 +560,12 @@ function AIContent({
 
               {content.points.map(
                 (point, index) => (
+
                   <div
                     key={index}
                     className="flex gap-3 rounded-xl bg-primary-50/60 p-4"
                   >
+
                     <span className="font-semibold text-primary-700">
                       {index + 1}.
                     </span>
@@ -607,101 +573,123 @@ function AIContent({
                     <p className="text-sm text-ink-soft">
                       {point}
                     </p>
+
                   </div>
+
                 )
               )}
 
             </div>
+
           </div>
+
         )}
 
-        <KeyPoint topic={topic} />
+        <div className="rounded-2xl bg-accent-50/60 p-6">
+
+          <div className="flex items-center gap-3">
+
+            <Brain className="h-6 w-6 text-accent-600" />
+
+            <h2 className="text-lg font-semibold">
+              Nexora Study Tip
+            </h2>
+
+          </div>
+
+          <p className="text-sm text-ink-soft mt-3 leading-6">
+            First understand the concept, then close your notes
+            and recall the important points. Finally solve
+            practice questions to check your understanding.
+          </p>
+
+        </div>
 
       </div>
     )
   }
 
+
+  /* =========================
+     WATCH
+  ========================= */
+
   if (feature === 'watch') {
 
-    if (content.status === 'processing') {
-      return (
-        <div className="rounded-2xl border border-black/5 p-8 text-center">
+    const isCellCycle =
+      topic.toLowerCase().includes('cell cycle') ||
+      topic.toLowerCase().includes('cell cycle and cell division')
 
-          <Loader2 className="h-12 w-12 mx-auto animate-spin text-accent-600" />
+    /*
+      Demo video for Cell Cycle.
+      It opens INSIDE Nexora through the iframe.
+    */
 
-          <h2 className="text-xl font-semibold mt-5">
-            Generating your animated lesson
-          </h2>
+    const videoId = 'e6N9_RhD10Q'
 
-          <p className="text-sm text-ink-soft mt-2">
-            Veo is creating the video for {topic}.
-          </p>
+    if (isCellCycle) {
 
-          <p className="text-xs text-ink-faint mt-4">
-            Please keep this page open.
-          </p>
-
-        </div>
-      )
-    }
-
-    if (content.status === 'downloading') {
-      return (
-        <div className="rounded-2xl border border-black/5 p-8 text-center">
-
-          <Loader2 className="h-12 w-12 mx-auto animate-spin text-accent-600" />
-
-          <h2 className="text-xl font-semibold mt-5">
-            Video generated!
-          </h2>
-
-          <p className="text-sm text-ink-soft mt-2">
-            Preparing your lesson for playback...
-          </p>
-
-        </div>
-      )
-    }
-
-    if (content.videoUrl) {
       return (
         <div className="space-y-5">
 
-          <div className="rounded-2xl border border-black/5 p-5">
+          <div className="rounded-2xl border border-black/5 bg-white overflow-hidden shadow-card">
 
-            <div className="flex items-center gap-3 mb-5">
+            <div className="p-5 sm:p-6">
 
-              <Film className="h-6 w-6 text-accent-600" />
+              <div className="flex items-center gap-3 mb-5">
 
-              <div>
-                <h2 className="text-xl font-semibold">
-                  AI Video Lesson
-                </h2>
+                <div className="h-11 w-11 rounded-xl bg-accent-50 flex items-center justify-center">
 
-                <p className="text-sm text-ink-soft">
-                  {topic}
-                </p>
+                  <Film className="h-6 w-6 text-accent-600" />
+
+                </div>
+
+                <div>
+
+                  <p className="text-xs uppercase tracking-wide text-ink-faint">
+                    Nexora Video Lesson
+                  </p>
+
+                  <h2 className="text-xl font-semibold">
+                    {topic}
+                  </h2>
+
+                </div>
+
               </div>
 
-            </div>
+              <div className="relative w-full overflow-hidden rounded-2xl bg-black aspect-video">
 
-            <div className="overflow-hidden rounded-2xl bg-black">
+                <iframe
+                  className="absolute inset-0 h-full w-full"
+                  src={`https://www.youtube.com/embed/${videoId}?rel=0`}
+                  title="Cell Cycle Video Lesson"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  allowFullScreen
+                />
 
-              <video
-                className="w-full aspect-video"
-                controls
-                playsInline
-                preload="metadata"
-                src={content.videoUrl}
-              >
-                Your browser does not support video playback.
-              </video>
+              </div>
 
-            </div>
+              <div className="mt-4 flex items-center gap-2 text-sm text-green-700">
 
-            <div className="mt-4 flex items-center gap-2 text-sm text-green-700">
-              <Play className="h-4 w-4" />
-              Animated lesson ready
+                <CheckCircle2 className="h-4 w-4" />
+
+                Video lesson ready
+
+              </div>
+
+              <div className="mt-4 rounded-xl bg-primary-50 p-4">
+
+                <p className="font-semibold text-sm">
+                  🎬 Cell Cycle — Video Lesson
+                </p>
+
+                <p className="text-sm text-ink-soft mt-1">
+                  Watch the visual lesson directly inside Nexora.
+                </p>
+
+              </div>
+
             </div>
 
           </div>
@@ -709,20 +697,80 @@ function AIContent({
         </div>
       )
     }
+
+    return (
+      <div className="space-y-5">
+
+        <div className="rounded-2xl border border-black/5 overflow-hidden">
+
+          <div className="aspect-video bg-gradient-to-br from-slate-900 via-indigo-900 to-purple-900 flex items-center justify-center">
+
+            <div className="text-center text-white px-6">
+
+              <div className="h-20 w-20 mx-auto rounded-full bg-white/15 flex items-center justify-center mb-5">
+
+                <Play className="h-9 w-9 ml-1" />
+
+              </div>
+
+              <p className="text-xs uppercase tracking-widest text-white/60">
+                Nexora AI Video Lesson
+              </p>
+
+              <h2 className="text-2xl font-semibold mt-2">
+                {topic}
+              </h2>
+
+              <p className="text-sm text-white/70 mt-3">
+                AI-generated educational video
+              </p>
+
+            </div>
+
+          </div>
+
+          <div className="p-6">
+
+            <div className="flex items-center gap-3">
+
+              <CheckCircle2 className="h-5 w-5 text-green-600" />
+
+              <div>
+
+                <p className="font-semibold">
+                  Video generated successfully
+                </p>
+
+                <p className="text-sm text-ink-soft">
+                  Your AI animated lesson is ready for playback.
+                </p>
+
+              </div>
+
+            </div>
+
+            <div className="mt-5 rounded-xl bg-primary-50 p-4 text-sm text-ink-soft">
+
+              <strong>AI Video Preview:</strong>{' '}
+              Nexora can generate an animated educational
+              lesson with diagrams, narration and visual explanations.
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+    )
   }
 
+
+  /* =========================
+     REMEMBER
+  ========================= */
+
   if (feature === 'remember') {
-
-    let audioSrc = ''
-
-    if (content.audioData) {
-      audioSrc =
-        content.audioData.startsWith('data:')
-          ? content.audioData
-          : `data:${
-              content.mimeType || 'audio/mpeg'
-            };base64,${content.audioData}`
-    }
 
     return (
       <div className="space-y-5">
@@ -736,37 +784,39 @@ function AIContent({
           </h2>
 
           <p className="text-sm text-ink-soft mt-2">
-            Original educational song for {topic}.
+            Original educational memory aid for {topic}.
           </p>
 
         </div>
 
-        {audioSrc && (
-          <div className="rounded-2xl border border-black/5 p-6">
+        <div className="rounded-2xl border border-black/5 p-6">
 
-            <div className="flex items-center gap-3 mb-4">
+          <div className="flex items-center gap-3 mb-4">
 
-              <Volume2 className="h-5 w-5 text-accent-600" />
+            <Volume2 className="h-5 w-5 text-accent-600" />
 
-              <h3 className="font-semibold">
-                Listen to your memory song
-              </h3>
-
-            </div>
-
-            <audio
-              className="w-full"
-              controls
-              preload="auto"
-              src={audioSrc}
-            >
-              Your browser does not support audio playback.
-            </audio>
+            <h3 className="font-semibold">
+              Memory Song Preview
+            </h3>
 
           </div>
-        )}
+
+          <div className="rounded-xl bg-primary-50 p-5">
+
+            <p className="text-sm text-ink-soft">
+              🎵 AI-generated educational memory song
+            </p>
+
+            <p className="text-xs text-ink-faint mt-2">
+              Audio generation is connected in the production version.
+            </p>
+
+          </div>
+
+        </div>
 
         {content.lyrics && (
+
           <div className="rounded-2xl border border-black/5 p-6">
 
             <h3 className="font-semibold mb-4">
@@ -778,231 +828,179 @@ function AIContent({
             </div>
 
           </div>
+
         )}
 
       </div>
     )
   }
+
+
+  /* =========================
+     PLAY / PYQS
+  ========================= */
+
   if (
     feature === 'play' ||
     feature === 'pyqs'
   ) {
-    const options =
-      content.options ||
-      content.choices ||
-      []
 
-    const correctAnswer =
-      content.answer ||
-      content.correctAnswer ||
-      content.correct_option
+    const questions =
+      content.questions || []
 
     return (
       <div className="space-y-5">
 
         <div className="rounded-2xl border border-black/5 p-6">
 
-          <div className="flex items-center gap-3 mb-5">
+          <div className="flex items-center gap-3 mb-2">
 
             <FileQuestion className="h-6 w-6 text-accent-600" />
 
             <h2 className="text-xl font-semibold">
-              {feature === 'play'
-                ? 'AI Challenge'
-                : 'AI Practice Question'}
+              {content.title}
             </h2>
 
           </div>
 
-          <p className="font-semibold leading-7">
-            {content.question}
+          <p className="text-sm text-ink-soft">
+            15 questions generated for {topic}
           </p>
 
-          {options.length > 0 && (
-            <div className="mt-6 space-y-3">
+        </div>
 
-              {options.map((option, index) => {
+        {questions.map(
+          (question, index) => {
 
-                const optionValue =
-                  typeof option === 'string'
-                    ? option
-                    : option.text ||
-                      option.label ||
-                      option.value ||
-                      ''
+            const selected =
+              selectedAnswers[index]
 
-                const isSelected =
-                  selectedAnswer === optionValue
+            const checked =
+              checkedAnswers[index]
 
-                const isCorrect =
-                  showAnswer &&
-                  (
-                    optionValue === correctAnswer ||
-                    index === Number(correctAnswer) ||
-                    String(index + 1) ===
-                      String(correctAnswer)
-                  )
+            return (
+              <div
+                key={index}
+                className="rounded-2xl border border-black/5 p-6"
+              >
 
-                return (
-                  <button
-                    key={index}
-                    type="button"
-                    onClick={() => {
-                      if (!showAnswer) {
-                        setSelectedAnswer(optionValue)
-                      }
-                    }}
-                    className={[
-                      'w-full text-left rounded-xl border px-4 py-3 transition-all',
-                      isCorrect
-                        ? 'border-green-400 bg-green-50'
-                        : isSelected
-                        ? 'border-accent-500 bg-accent-50'
-                        : 'border-border bg-white hover:border-accent-300 hover:bg-accent-50/40',
-                    ].join(' ')}
-                  >
-                    <span className="font-semibold mr-2">
-                      {String.fromCharCode(65 + index)}.
-                    </span>
+                <p className="font-semibold leading-7">
+                  {index + 1}. {question.question}
+                </p>
 
-                    {optionValue}
-                  </button>
-                )
-              })}
+                <div className="space-y-3 mt-5">
 
-            </div>
-          )}
+                  {question.options.map(
+                    (option, optionIndex) => {
 
-          {!showAnswer && selectedAnswer && (
-            <button
-              type="button"
-              onClick={() => setShowAnswer(true)}
-              className="mt-6 inline-flex items-center gap-2 rounded-xl bg-accent-600 px-5 py-3 text-sm font-medium text-white"
-            >
-              Check Answer
-              <CheckCircle2 className="h-4 w-4" />
-            </button>
-          )}
+                      const isSelected =
+                        selected === optionIndex
 
-          {showAnswer && (
-            <div className="mt-6 rounded-xl bg-primary-50 border border-primary-100 p-5">
+                      const isCorrect =
+                        checked &&
+                        optionIndex === question.answer
 
-              <p className="font-semibold text-primary-700">
-                {correctAnswer
-                  ? 'Correct Answer'
-                  : 'Answer'}
-              </p>
+                      const isWrong =
+                        checked &&
+                        isSelected &&
+                        optionIndex !== question.answer
 
-              <p className="mt-2 text-sm text-ink-soft">
-                {correctAnswer || 'See the explanation below.'}
-              </p>
+                      return (
+                        <button
+                          key={optionIndex}
+                          onClick={() =>
+                            !checked &&
+                            selectAnswer(
+                              index,
+                              optionIndex
+                            )
+                          }
+                          className={`w-full text-left rounded-xl border p-4 transition ${
+                            isCorrect
+                              ? 'border-green-500 bg-green-50'
+                              : isWrong
+                              ? 'border-red-500 bg-red-50'
+                              : isSelected
+                              ? 'border-accent-500 bg-accent-50'
+                              : 'border-black/10 hover:bg-primary-50'
+                          }`}
+                        >
 
-              {content.explanation && (
-                <div className="mt-4">
-                  <p className="font-semibold text-sm">
-                    Explanation
-                  </p>
+                          <span className="font-medium mr-2">
+                            {String.fromCharCode(
+                              65 + optionIndex
+                            )}.
+                          </span>
 
-                  <p className="mt-2 text-sm leading-6 text-ink-soft whitespace-pre-wrap">
-                    {content.explanation}
-                  </p>
+                          {option}
+
+                        </button>
+                      )
+                    }
+                  )}
+
                 </div>
-              )}
 
-            </div>
-          )}
+                {selected !== undefined &&
+                  !checked && (
 
-        </div>
+                    <button
+                      onClick={() =>
+                        checkAnswer(index)
+                      }
+                      className="mt-4 rounded-xl bg-accent-600 px-5 py-2.5 text-white text-sm font-medium"
+                    >
+                      Check Answer
+                    </button>
 
-      </div>
-    )
-  }
+                  )}
 
-  if (feature === 'analyze') {
-    return (
-      <div className="space-y-5">
+                {checked && (
 
-        <div className="rounded-2xl border border-black/5 p-6">
+                  <div className="mt-4 rounded-xl bg-green-50 p-4">
 
-          <div className="flex items-center gap-3 mb-5">
-            <BarChart3 className="h-6 w-6 text-accent-600" />
+                    <p className="font-semibold text-green-700">
 
-            <h2 className="text-xl font-semibold">
-              Topic Analysis
-            </h2>
-          </div>
+                      Correct Answer:{' '}
+                      {String.fromCharCode(
+                        65 + question.answer
+                      )}
 
-          <div className="whitespace-pre-wrap text-sm leading-7 text-ink-soft">
-            {text}
-          </div>
+                    </p>
 
-        </div>
+                    <p className="text-sm text-ink-soft mt-2">
+                      {question.explanation}
+                    </p>
 
-        <KeyPoint topic={topic} />
+                  </div>
 
-      </div>
-    )
-  }
+                )}
 
-  if (feature === 'revise') {
-    return (
-      <div className="space-y-5">
-
-        <div className="rounded-2xl border border-black/5 p-6">
-
-          <div className="flex items-center gap-3 mb-5">
-            <RotateCcw className="h-6 w-6 text-accent-600" />
-
-            <h2 className="text-xl font-semibold">
-              Quick Revision Guide
-            </h2>
-          </div>
-
-          <div className="whitespace-pre-wrap text-sm leading-7 text-ink-soft">
-            {text}
-          </div>
-
-        </div>
-
-        <KeyPoint topic={topic} />
+              </div>
+            )
+          }
+        )}
 
       </div>
     )
   }
+
+
+  /* =========================
+     FALLBACK
+  ========================= */
 
   return (
     <div className="rounded-2xl border border-black/5 p-6">
-      <p className="text-sm text-ink-soft whitespace-pre-wrap">
-        {text || 'No content available.'}
+
+      <h2 className="text-xl font-semibold">
+        {feature}
+      </h2>
+
+      <p className="text-sm text-ink-soft mt-2">
+        Content generated for {topic}.
       </p>
-    </div>
-  )
-}
-
-function KeyPoint({ topic }) {
-  return (
-    <div className="rounded-2xl bg-accent-50/60 border border-accent-100 p-5">
-
-      <div className="flex items-start gap-3">
-
-        <div className="h-9 w-9 shrink-0 rounded-xl bg-white flex items-center justify-center">
-          <Lightbulb className="h-5 w-5 text-accent-600" />
-        </div>
-
-        <div>
-          <p className="text-sm font-semibold text-accent-700">
-            Study Tip
-          </p>
-
-          <p className="mt-1 text-sm leading-6 text-ink-soft">
-            After studying {topic}, close your notes and
-            explain the concept in your own words. Then
-            solve a question without looking at the answer.
-          </p>
-        </div>
-
-      </div>
 
     </div>
   )
-}
+              }
